@@ -1,0 +1,8 @@
+version: 0.5.13
+files:
+  - url: cvs-browser.exe
+    sha512: cFogmhEz88ZnD3rb3gnUzE0SSBaUOaBkuvdGIbBGS/xDnm6lRlC7sSQhY8WW401JsruQMOjns/Zn9i+V/UJc1A==
+    size: 113775647
+path: cvs-browser.exe
+sha512: cFogmhEz88ZnD3rb3gnUzE0SSBaUOaBkuvdGIbBGS/xDnm6lRlC7sSQhY8WW401JsruQMOjns/Zn9i+V/UJc1A==
+releaseDate: '2026-11-03T22:32:25.977Z'
