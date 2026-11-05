@@ -9,7 +9,7 @@ management, address bar, filter-list infrastructure, history, bookmarks,
 downloads, permission flow and the entire interface — is written in the code in
 this repository.
 
-Download for Windows: <https://girginos.app>
+Download for Windows: <https://github.com/BartuAbiHD/omni-browser/releases/latest>
 
 ## Running it
 
@@ -197,7 +197,7 @@ Cutting a release:
 
 ```bash
 npm run paket                        # installers under dagitim/
-npm run manifest-imzala -- --anahtar ~/pusula-yayin-anahtari.pem --indirme https://browserapp.girginos.app/pusula
+npm run manifest-imzala -- --anahtar ~/pusula-yayin-anahtari.pem --indirme https://github.com/BartuAbiHD/omni-browser/releases/latest
 npm run yayin-dogrula -- ~/pusula-yayin-anahtari.pem   # final check before upload
 npm run canli-dogrula                # after upload: verify against the live server
 ```
