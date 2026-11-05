@@ -1,15 +1,15 @@
 {
-  "surum": "0.5.13",
+  "surum": "1.0.0",
   "kanal": "kararli",
-  "yayinTarihi": "2026-11-03T22:32:46.634Z",
-  "gecerlilikBitisi": "2026-12-03T22:32:46.634Z",
+  "yayinTarihi": "2026-11-04T14:03:30.028Z",
+  "gecerlilikBitisi": "2026-12-04T14:03:30.028Z",
   "notlar": "",
   "dosyalar": {
     "win32-x64": {
       "ad": "cvs-browser.exe",
-      "url": "https://github.com/BartuAbiHD/omni-browser/raw/refs/heads/main/pusula/cvs-browser.exe",
-      "boyut": 113775647,
-      "sha512": "cFogmhEz88ZnD3rb3gnUzE0SSBaUOaBkuvdGIbBGS/xDnm6lRlC7sSQhY8WW401JsruQMOjns/Zn9i+V/UJc1A=="
+      "url": "https://github.com/BartuAbiHD/omni-browser/releases/latest/download/cvs-browser.exe",
+      "boyut": 113875503,
+      "sha512": "hhgtHk9UUAYspaoDa0JH9OwTmSJBQilW2/53b+wMe1+89lqYCcbWAQpmlcsOKezd4xCshBjWRo/4HSwN4Rs/Og=="
     }
   }
 }
