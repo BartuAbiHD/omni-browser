@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2026.11.05] - 2026-11-05
+## [2026.11.5] - 2026-11-05
 
 ### Added
 - **What's New window**: after the browser is updated, the first launch shows the release notes of the new version only. The notes are read from the project's `CHANGELOG.md` on GitHub and rendered as formatted text (headings, lists, **bold**, `code`) instead of raw Markdown.
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`@username` shortcuts**: with YouTube selected, typing a space-free `@username` opens `https://yton.tr/@username`; with Video Vitrini selected it opens `https://videovitrini.com/@username`.
 
 ### Changed
-- Application version scheme switched to date-based versions (`2026.11.05`; `package.json` carries it as `2026.11.5` because semver forbids leading zeros).
+- Application version scheme switched to date-based versions.
 - **Updated browser logos in the import list**: Supermium, Vivaldi, Opera, Firefox, Floorp and Opera GX now use new official vector icons (still embedded as inline `<svg>`, CSP-compliant; gradient IDs are prefixed so logos never clash).
 
 ---
