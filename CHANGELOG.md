@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Application version scheme switched to date-based versions.
+- **About page update check** (`omni://about`): "Check for updates" now reports the real result instead of always claiming the browser is up to date. When a new version exists it shows the found version and offers Download, then Install and restart, with live download progress and error reasons, the same as Settings > Updates. "Up to date" is shown only after a check confirms it.
 - **Updated browser logos in the import list**: Supermium, Vivaldi, Opera, Firefox, Floorp and Opera GX now use new official vector icons (still embedded as inline `<svg>`, CSP-compliant; gradient IDs are prefixed so logos never clash).
 
 ---
