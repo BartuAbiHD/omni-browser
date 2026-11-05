@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2026.11.05] - 2026-11-05
+
+### Added
+- **What's New window**: after the browser is updated, the first launch shows the release notes of the new version only. The notes are read from the project's `CHANGELOG.md` on GitHub and rendered as formatted text (headings, lists, **bold**, `code`) instead of raw Markdown.
+- **Language selector in the What's New window**: choosing a language other than English shows the release notes translated into that language (12 languages supported; falls back to English if the translation is unavailable). Only the public release-notes text is sent for translation, and only when a non-English language is selected.
+- **Private window search engine**: new setting under Settings > Search and startup to choose the search engine used in private tabs and windows (address bar, new tab page, home button, paste-and-go, "Search in private window"). Defaults to Startpage; normal tabs keep using the regular search engine setting.
+- **Search target picker on the new tab page**: choose Google, DuckDuckGo, Yandex, Bing, Startpage, Wikipedia, GitHub, YouTube or Video Vitrini under the search box; the query is searched on the selected site and your choice is remembered.
+- **`@username` shortcuts**: with YouTube selected, typing a space-free `@username` opens `https://yton.tr/@username`; with Video Vitrini selected it opens `https://videovitrini.com/@username`.
+
+### Changed
+- Application version scheme switched to date-based versions (`2026.11.05`; `package.json` carries it as `2026.11.5` because semver forbids leading zeros).
+- **Updated browser logos in the import list**: Supermium, Vivaldi, Opera, Firefox, Floorp and Opera GX now use new official vector icons (still embedded as inline `<svg>`, CSP-compliant; gradient IDs are prefixed so logos never clash).
+
+---
+
 ## [1.0.0] - 2026-11-04
 
 ### Added
