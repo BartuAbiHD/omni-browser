@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2026.11.6] - 2026-11-05
+
+### Added
+- **Secure DNS (DNS-over-HTTPS)** in Settings > Privacy, like other Chromium browsers. **Off by default**; while it is off, domain lookups go only to the operating system's DNS and the provider list is hidden. When on, choose a provider: operating system default (when available), OpenDNS, CleanBrowsing (Family Filter), Cloudflare (1.1.1.1), Google (Public DNS), or a custom `https://` address (invalid addresses are rejected). A chosen provider is used exclusively and does not fall back to plain DNS; the system default falls back when it has no secure DNS. Applies immediately, no restart. All 12 languages are covered.
+- **`omni://flags`** (also `chrome://flags`): experimental Chromium features with search, a Default / Enabled / Disabled choice per flag, "Reset all" and a "Restart" bar (changes apply after a restart). Flags: WebRTC post-quantum key agreement (Kyber / ML-KEM, **disabled by default**), QUIC (HTTP/3), WebRTC local IP hiding, parallel downloading, smooth scrolling and hardware acceleration. TLS ML-KEM is not listed because this Chromium build no longer exposes it as a feature. All 12 languages are covered.
+- **Middle-click closes the window on the last tab**: middle-clicking a tab when it is the only open tab now closes the browser, exactly like Ctrl+W. The tab's × button is unchanged and still opens a new tab instead.
+
+### Fixed
+- **PreMiD Discord sign-in**: after Discord approval the browser opened `login.premid.app`, which has no DNS records on purpose; the extension redirects that tab to its own `oauth2.html`, but the redirect never happened. Three causes fixed:
+  - a tab showing an error page now reports the address that failed to load (as Chrome does) instead of the internal error page, so extensions can recognise it;
+  - an extension may now navigate a tab to its own `chrome-extension://` pages with `chrome.tabs.update` (other extensions' pages and other schemes stay blocked);
+  - a sleeping Manifest V3 extension service worker is now woken by a page-load event like in Chrome, instead of the event being dropped.
+
+---
+
 ## [2026.11.5] - 2026-11-05
 
 ### Added
