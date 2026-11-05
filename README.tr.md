@@ -171,7 +171,7 @@ Yayın çıkarma:
 
 ```bash
 npm run paket                        # dagitim/ altına kurulum paketleri
-npm run manifest-imzala -- --anahtar ~/pusula-yayin-anahtari.pem   --indirme https://browserapp.girginos.app/pusula
+npm run manifest-imzala -- --anahtar ~/pusula-yayin-anahtari.pem   --indirme https://github.com/BartuAbiHD/omni-browser/releases/latest/download
 npm run yayin-dogrula -- ~/pusula-yayin-anahtari.pem   # yüklemeden önce son kontrol
 ```
 
@@ -302,7 +302,7 @@ Chromium ve Electron kendi lisansları altındadır; kurulum paketindeki
 
 ## İndirme
 
-Windows için kurulum paketi: <https://girginos.app>
+Windows için kurulum paketi: <https://github.com/BartuAbiHD/omni-browser/releases/latest>
 
 Kurulum paketi henüz kod imzalama sertifikasıyla imzalanmıyor; Windows
 SmartScreen ilk çalıştırmada uyarı gösterir. İndirdiğiniz dosyanın
