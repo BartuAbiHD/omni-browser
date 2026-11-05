@@ -17,15 +17,24 @@
  */
 
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
+
+function tildeCoz(p) {
+  if (!p) return p;
+  if (p === '~' || p.startsWith('~\\') || p.startsWith('~/')) {
+    return path.join(os.homedir(), p.slice(1).replace(/^[/\\]+/, ''));
+  }
+  return p;
+}
 
 function argOku(ad, varsayilan) {
   const i = process.argv.indexOf('--' + ad);
   return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : varsayilan;
 }
 
-const anahtarYolu = argOku('anahtar');
+const anahtarYolu = tildeCoz(argOku('anahtar'));
 const dizin = path.resolve(argOku('dizin', 'dagitim'));
 const indirmeKoku = (argOku('indirme', '') || '').replace(/\/+$/, '');
 const gun = Number(argOku('gun', '30'));

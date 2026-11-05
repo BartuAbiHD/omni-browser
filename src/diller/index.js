@@ -5,6 +5,7 @@ const tr = require('./tr');
 // Sıra, ayarlardaki listenin sırasıdır.
 const DILLER = {
   tr,
+  az: require('./az'),
   en: require('./en'),
   de: require('./de'),
   fr: require('./fr'),

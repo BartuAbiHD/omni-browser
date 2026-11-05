@@ -1,0 +1,36 @@
+'use strict';
+const assert = require('node:assert');
+const { EklentiBaglamMenusu } = require('../src/eklenti-baglam');
+
+let n = 0;
+const ok = (c, ad) => { assert.ok(c, ad); n++; };
+const K = 'a'.repeat(32), K2 = 'b'.repeat(32);
+const olaylar = [];
+const b = new EklentiBaglamMenusu({ bildir: (...a) => olaylar.push(a) });
+const eks = [{ id: K, ad: 'Bir' }, { id: K2, ad: 'Iki' }];
+const sablon = (p) => b.sablon(eks, p, 'https://x.com/', (k, bilgi) => olaylar.push([k, bilgi]));
+
+ok(b.cagir(K, 'create', [{ id: 'a', title: 'Sayfa' }]) === 'a', 'create id');
+ok(sablon({}).length === 1 && sablon({})[0].label === 'Sayfa', 'tek öğe doğrudan');
+ok(sablon({ selectionText: 'x' }).length === 0, 'page öğesi seçimde çıkmaz (Chrome gibi)');
+b.cagir(K, 'create', [{ id: 'b', title: 'Seç %s', contexts: ['selection'] }]);
+const s1 = sablon({ selectionText: 'merhaba' });
+ok(s1.length === 1 && s1[0].label === 'Seç merhaba', 'seçim bağlamı, %s yerine geçer');
+b.cagir(K, 'create', [{ id: 'c', title: 'Link', contexts: ['link'], targetUrlPatterns: ['https://*.ornek.com/*'] }]);
+ok(JSON.stringify(sablon({ linkURL: 'https://www.ornek.com/a' })).includes('"Link"'), 'link deseni eşleşir');
+ok(!JSON.stringify(sablon({ linkURL: 'https://baska.com/a' })).includes('"Link"'), 'link deseni eşleşmez');
+b.cagir(K2, 'create', [{ id: 'a', title: 'Diger', contexts: ['all'], documentUrlPatterns: ['https://y.com/*'] }]);
+ok(sablon({}).length === 1, 'documentUrlPatterns dışlar');
+b.cagir(K, 'create', [{ id: 'k', title: 'Alt', parentId: 'a' }]);
+ok(sablon({})[0].submenu, 'alt menü');
+sablon({})[0].submenu[0].click();
+ok(olaylar.length && olaylar[0][1].menuItemId === 'k' && olaylar[0][1].parentMenuItemId === 'a', 'tıklama bilgisi');
+b.cagir(K, 'remove', ['a']);
+ok(!b.kayit.get(K).has('k'), 'üst silinince çocuk da silinir');
+assert.throws(() => b.cagir(K, 'create', [{ id: 'b', title: 'x' }]), /Yinelenen/); n++;
+assert.throws(() => b.cagir(K, 'create', [{ title: 'x', contexts: ['yok'] }]), /bağlam/); n++;
+b.cagir(K, 'create', [{ id: 'act', title: 'Düğme', contexts: ['action'] }]);
+ok(!JSON.stringify(sablon({})).includes('Düğme'), 'action bağlamı sayfa menüsünde yok');
+b.temizle(K);
+ok(sablon({}).length === 0, 'temizle');
+console.log('✓ ' + n + ' eklenti bağlam menüsü testinin hepsi geçti.');

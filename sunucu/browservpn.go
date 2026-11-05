@@ -23,10 +23,14 @@ package main
 
 import (
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
+	"crypto/tls"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -34,6 +38,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -44,11 +49,17 @@ import (
 	"golang.org/x/time/rate"
 )
 
+var (
+	portFlag    = flag.Int("port", 4433, "Dinlenecek TCP portu")
+	domainFlag  = flag.String("domain", "vpn.barindirici.com.tr", "Sunucu alan adı")
+	secretFlag  = flag.String("secret", "/etc/browservpn/secret", "HMAC gizli anahtar dosya yolu")
+	certDirFlag = flag.String("certdir", "/etc/browservpn/cert", "Otomatik autocert önbellek dizini")
+	certFlag    = flag.String("cert", "", "Mevcut SSL sertifika dosyası (örn: /etc/letsencrypt/live/domain/fullchain.pem)")
+	keyFlag     = flag.String("key", "", "Mevcut SSL özel anahtar dosyası (örn: /etc/letsencrypt/live/domain/privkey.pem)")
+)
+
 const (
-	domain     = "de-browservpn.girginos.app"
 	limitBytes = 12_500_000 // 100 Mbps = 100e6 bit/s ≈ 12.5 MB/s
-	certDir    = "/etc/browservpn/cert"
-	secretFile = "/etc/browservpn/secret" // gizli HMAC anahtarı (openssl rand -hex 32)
 
 	/*
 	 * KÖTÜYE KULLANIM ÖNLEMLERİ.
@@ -86,12 +97,29 @@ var (
 	kayitKovalari = map[string]*kova{} // IP -> kayıt kotası
 )
 
-// Gizli anahtarı diskten yükler. Yoksa/çok kısaysa süreç durur: anahtarsız
-// çalışmak tüm token'ları geçersiz kılar (sessizce açık proxy olmaktansa hata).
+// Gizli anahtarı diskten yükler. Dosya yoksa otomatik olarak güvenli 32 baytlık rastgele hex anahtar üretir.
 func loadSecret() {
-	data, err := os.ReadFile(secretFile)
+	path := *secretFlag
+	data, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatalf("secret okunamadı (%s): %v — 'openssl rand -hex 32 > %s' ile üretin", secretFile, err, secretFile)
+		if os.IsNotExist(err) {
+			dir := filepath.Dir(path)
+			if err := os.MkdirAll(dir, 0700); err != nil {
+				log.Fatalf("secret dizini oluşturulamadı (%s): %v", dir, err)
+			}
+			b := make([]byte, 32)
+			if _, rerr := rand.Read(b); rerr != nil {
+				log.Fatalf("rastgele anahtar üretilemedi: %v", rerr)
+			}
+			hexSecret := hex.EncodeToString(b)
+			if werr := os.WriteFile(path, []byte(hexSecret), 0600); werr != nil {
+				log.Fatalf("secret kaydedilemedi (%s): %v", path, werr)
+			}
+			log.Printf("yeni secret otomatik üretildi ve kaydedildi: %s", path)
+			data = []byte(hexSecret)
+		} else {
+			log.Fatalf("secret okunamadı (%s): %v", path, err)
+		}
 	}
 	s := strings.TrimSpace(string(data))
 	if len(s) < 16 {
@@ -411,6 +439,7 @@ func handleHTTP(w http.ResponseWriter, r *http.Request, ls ...*rate.Limiter) {
 }
 
 func main() {
+	flag.Parse()
 	loadSecret()
 	yerelIPleriTopla()   // hedef kilidi: iç aralıklar + kendi adresleri kapalı
 	go kovalariTemizle() // boşta kalan kotalar belleği şişirmesin
@@ -423,17 +452,32 @@ func main() {
 		}
 	}()
 
-	m := &autocert.Manager{
-		Cache:      autocert.DirCache(certDir),
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(domain),
+	var tlsCfg *tls.Config
+	if *certFlag != "" && *keyFlag != "" {
+		cert, err := tls.LoadX509KeyPair(*certFlag, *keyFlag)
+		if err != nil {
+			log.Fatalf("TLS sertifikası okunamadı (cert: %s, key: %s): %v", *certFlag, *keyFlag, err)
+		}
+		tlsCfg = &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			NextProtos:   []string{"http/1.1"},
+		}
+		log.Printf("Özel TLS sertifikası yüklendi: %s", *certFlag)
+	} else {
+		m := &autocert.Manager{
+			Cache:      autocert.DirCache(*certDirFlag),
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(*domainFlag),
+		}
+		tlsCfg = m.TLSConfig()
+		// h2 YOK: HTTP/2'de CONNECT hijack çalışmaz. http/1.1 + acme-tls/1 (autocert challenge).
+		tlsCfg.NextProtos = []string{"http/1.1", "acme-tls/1"}
+		log.Printf("Let's Encrypt autocert devrede (domain: %s, certdir: %s)", *domainFlag, *certDirFlag)
 	}
-	tlsCfg := m.TLSConfig()
-	// h2 YOK: HTTP/2'de CONNECT hijack çalışmaz. http/1.1 + acme-tls/1 (autocert challenge).
-	tlsCfg.NextProtos = []string{"http/1.1", "acme-tls/1"}
 
+	addr := fmt.Sprintf(":%d", *portFlag)
 	srv := &http.Server{
-		Addr:         ":443",
+		Addr:         addr,
 		Handler:      http.HandlerFunc(handler),
 		TLSConfig:    tlsCfg,
 		ReadTimeout:  0, // CONNECT tünelleri uzun ömürlü; gövde deadline'ı yok
@@ -443,10 +487,10 @@ func main() {
 		ReadHeaderTimeout: 10 * time.Second,
 		IdleTimeout:       90 * time.Second,
 	}
-	log.Printf("browservpn :443 dinliyor (domain %s, otomatik süreli token, limit 100 Mbps/cihaz + 100 Mbps/IP)", domain)
-	ln, err := net.Listen("tcp", ":443")
+	log.Printf("browservpn %s dinliyor (domain %s, otomatik süreli token, limit 100 Mbps/cihaz + 100 Mbps/IP)", addr, *domainFlag)
+	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Fatalf(":443 dinlenemedi: %v", err)
+		log.Fatalf("%s dinlenemedi: %v", addr, err)
 	}
 	// Küresel eşzamanlı bağlantı tavanı: fd/goroutine tükenmesine karşı.
 	ln = sinirlaDinleyici(ln, kureselTavan)

@@ -7,14 +7,24 @@
  */
 
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { manifestDogrula, ozetEslesiyor, SEBEPLER } = require('../src/guncelleme-dogrula');
 
+function tildeCoz(p) {
+  if (!p) return path.join(os.homedir(), 'pusula-yayin-anahtari.pem');
+  if (p === '~' || p.startsWith('~\\') || p.startsWith('~/')) {
+    return path.join(os.homedir(), p.slice(1).replace(/^[/\\]+/, ''));
+  }
+  return p;
+}
+
 const DIZIN = path.join(__dirname, '..', 'dagitim');
 const ham = fs.readFileSync(path.join(DIZIN, 'pusula-guncelleme.json'), 'utf8');
 const imza = fs.readFileSync(path.join(DIZIN, 'pusula-guncelleme.json.imza'), 'utf8').trim();
-const ozelPem = fs.readFileSync(process.argv[2], 'utf8');
+const anahtarYolu = tildeCoz(process.argv[2]);
+const ozelPem = fs.readFileSync(anahtarYolu, 'utf8');
 const acik = crypto.createPublicKey(ozelPem).export({ type: 'spki', format: 'pem' });
 
 const manifest = JSON.parse(ham);
@@ -63,7 +73,8 @@ console.log('5) Sürüm ve tarih kapıları');
 esit('aynı sürümde güncelleme yok',
   manifestDogrula({ ...eski, mevcutSurum: manifest.surum }).sebep, SEBEPLER.GUNCEL);
 esit('daha yeni kurulum geri sürüme düşürülmez',
-  manifestDogrula({ ...eski, mevcutSurum: '9.9.9' }).sebep, SEBEPLER.GERI_SURUM);
+  // Sürüm takvim biçimine (2026.11.5) geçtiği için sabit '9.9.9' artık eski sayılıyordu.
+  manifestDogrula({ ...eski, mevcutSurum: '99999.0.0' }).sebep, SEBEPLER.GERI_SURUM);
 const sonra = Date.parse(manifest.gecerlilikBitisi) + 86400000;
 esit('süresi geçmiş manifest reddedilir (dondurma saldırısı)',
   manifestDogrula({ ...eski, simdi: sonra }).sebep, SEBEPLER.SURESI_GECMIS);

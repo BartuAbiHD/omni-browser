@@ -3,6 +3,15 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+const VARSAYILAN_YAN_PANELLER = [
+  { id: 'wikipedia', ad: 'Wikipedia', url: 'https://tr.wikipedia.org', varsayilanUrl: 'https://tr.wikipedia.org', ikon: 'wikipedia' },
+  { id: 'gemini', ad: 'Gemini', url: 'https://gemini.google.com', varsayilanUrl: 'https://gemini.google.com', ikon: 'gemini' },
+  { id: 'claude', ad: 'Claude', url: 'https://claude.ai', varsayilanUrl: 'https://claude.ai', ikon: 'claude' },
+  { id: 'chatgpt', ad: 'ChatGPT', url: 'https://chatgpt.com', varsayilanUrl: 'https://chatgpt.com', ikon: 'chatgpt' },
+  { id: 'deepseek', ad: 'DeepSeek', url: 'https://chat.deepseek.com', varsayilanUrl: 'https://chat.deepseek.com', ikon: 'deepseek' },
+  { id: 'grok', ad: 'Grok', url: 'https://grok.com', varsayilanUrl: 'https://grok.com', ikon: 'grok' }
+];
+
 const DEFAULTS = {
   ayarlar: {
     // 'sistem' -> işletim sisteminin diline göre seçilir
@@ -12,6 +21,7 @@ const DEFAULTS = {
     // Varsayilan KOYU (kullanici istegi); Ayarlar > Gorunum'den degistirilir.
     tema: 'koyu',
     aramaMotoru: 'duckduckgo',
+    gizliAramaMotoru: 'startpage',
     engelleyiciAcik: true,
     // uBlock Origin ağ motoru (SNFE). Kapatılırsa ~120 MB bellek düşer, ağ
     // engelleme eski çıplak-alan motoruna iner. Varsayılan açık.
@@ -21,9 +31,22 @@ const DEFAULTS = {
     // olarak taşınmıyorlar. Bozulan bir site çıkarsa adres çubuğundaki site
     // menüsünden o siteye özel istisna verilebilir.
     ucuncuTarafCerez: true,
+    // omni://flags: { [bayrakId]: 'etkin' | 'kapali' }. Bos = katalog varsayilanlari.
+    bayraklar: {},
+    // Guvenli DNS (DoH): varsayilan KAPALI (bkz. src/guvenli-dns.js).
+    guvenliDns: false,
+    dnsSaglayici: 'sistem',
+    dnsOzel: '',
     // Kapanışta çerezleri sil. Yer imlerindeki siteler korunur: onlar
     // kullanıcının bilerek sakladığı, oturumunu kaybetmek istemediği siteler.
     kapanistaCerezSil: false,
+    // İndirme klasörü. Boşsa varsayılan davranış (kaydetme penceresi); doluysa
+    // dosyalar sorulmadan bu klasöre kaydedilir.
+    indirmeKlasoru: '',
+    // Tema stili: varsayilan | gece-mavisi | mor-nebula | zumrut | gun-batimi | saf-koyu
+    temaStil: 'varsayilan',
+    // Özel arka plan resmi (Base64 data URL)
+    temaResmi: '',
     // HTTPS-First: ust duzey gezinmeler https e yukseltilir, sunucu HTTPS
     // konusmuyorsa o host icin geri dusulur (bkz. src/https-zorla.js).
     httpsZorla: true,
@@ -31,6 +54,9 @@ const DEFAULTS = {
     // diske yazilmaz; acilista sorulur. Varsayilan KAPALI (her acilista parola
     // yazmak istemeyeni zorlamayalim).
     anaParolaAcik: false,
+    // Geçiş anahtarlarını tarayıcı yönetir: açıkken navigator.credentials yaması
+    // kilitlenir, eklentiler (Proton Pass vb.) üzerine yazamaz. Yeni sayfalarda geçerli.
+    gecisAnahtariTarayici: true,
     // Vekil sunucu. 'kapali' | 'sistem' | 'elle'
     // Tor için: elle + socks5://127.0.0.1:9050
     vekilKip: 'sistem',
@@ -43,16 +69,22 @@ const DEFAULTS = {
     vpnLokasyon: 'de-1',
     cihazToken: '',    // proxy kimlik doğrulama token'ı (sunucudan)
     cihazKimlik: '',   // kalıcı anonim cihaz kimliği (ilk gerekince üretilir)
+    // DPI sansür aşma (yalnızca bu tarayıcıya özel SOCKS5 ByeDPI motoru)
+    dpiMod: 'kapali',  // 'kapali' | 'dahili' | 'ciadpi'
+    dpiStrateji: 'split-1', // 'split-1' | 'split-2' | 'split-sni' | 'fake-split'
+    dpiSozlesmeKabul: false, // DPI kullanım sözleşmesi kabul edilmeden DPI açılamaz
     gecmisiKaydet: true,
     anasayfa: '',
+    baslangicSekmeleri: [],
     yerImleriCubugu: true,
+    varsayilanOneriGizle: false,
     // Yeni sekme sayfasındaki tanıtım/reklam alanı. Üçüncü taraf bir reklam
     // ağı KULLANILMIYOR: kartlar buradan okunur, sayfa dışarı istek atmaz.
     // Kendi kartlarınızı eklemek için pusula-veri.json içindeki bu diziyi
     // düzenleyin: { etiket, baslik, metin, url }.
     duyurular: [
       {
-        etiket: 'Girginos Browser',
+        etiket: 'CVS Browser',
         baslik: 'İzleyici engelleyici çalışıyor',
         metin: 'EasyList ve EasyPrivacy listeleri arka planda güncelleniyor; bu sayfa hiçbir yere istek atmıyor.',
         url: ''
@@ -72,6 +104,13 @@ const DEFAULTS = {
     filtreListeleriAcik: true,
     otomatikGuncelle: true,
     ekListeler: [],          // [{ id, ad, url }]
+    // Kenar çubuğu ve Vivaldi benzeri web panelleri
+    yanCubukGoster: true,
+    yanPanelAcik: false,
+    yanPanelAktif: 'wikipedia',
+    yanPanelGenislik: 380,
+    yanPanelMobil: false,
+    yanPaneller: VARSAYILAN_YAN_PANELLER,
     // İzin türü başına genel karar: 'sor' | 'izin' | 'ret'.
     // Gürültülü ve nadiren istenen izinler varsayılan olarak sessizce reddedilir;
     // kullanıcı Ayarlar'dan her birini "Sor"a çevirebilir.
@@ -91,6 +130,10 @@ const DEFAULTS = {
   },
   gecmis: [],        // { url, baslik, zaman }
   yerImleri: [],     // { url, baslik, zaman }
+  parolalar: [],     // { id, origin, kullaniciAdi, parola, zaman }
+  gecisAnahtarlari: [], // passkey: { id, rpId, rpAdi, kullaniciKimlik, kullaniciAdi, kullaniciGoruntu, ozelAnahtar, sayac, zaman, sonKullanim }
+  eklentiler: {},    // kurulu eklentiler: { [kimlik]: { yol, etkin, sabit, kaynak } }
+  indirmeler: [],    // tamamlanmış indirmeler: { id, ad, url, zaman, toplam, alinan, durum, yol, calistirilabilir }
   izinler: {},       // origin -> { [permission]: 'izin' | 'ret' }
   siteIzinleri: [],     // engelleyicinin devre dışı bırakıldığı alan adları
   cerezIstisnalari: [], // üçüncü taraf çereze izin verilen üst seviye kökler
@@ -130,21 +173,47 @@ class Store {
        * .includes çağrısı fırlıyor; o çağrı webRequest işleyicisinin içinde
        * olduğu için tarayıcıda HİÇBİR istek tamamlanmıyordu. Ölçüldü.
        */
-      for (const alan of ['gecmis', 'yerImleri', 'siteIzinleri', 'cerezIstisnalari']) {
+      for (const alan of ['gecmis', 'yerImleri', 'indirmeler', 'siteIzinleri', 'cerezIstisnalari']) {
         if (!Array.isArray(this.veri[alan])) this.veri[alan] = [];
       }
       if (!this.veri.izinler || typeof this.veri.izinler !== 'object' || Array.isArray(this.veri.izinler)) {
         this.veri.izinler = {};
       }
       if (!Array.isArray(this.veri.ayarlar.ekListeler)) this.veri.ayarlar.ekListeler = [];
+      if (!Array.isArray(this.veri.ayarlar.baslangicSekmeleri)) this.veri.ayarlar.baslangicSekmeleri = [];
+      if (!Array.isArray(this.veri.ayarlar.yanPaneller) || this.veri.ayarlar.yanPaneller.length === 0) {
+        this.veri.ayarlar.yanPaneller = structuredClone(VARSAYILAN_YAN_PANELLER);
+      }
     } catch {
       // İlk açılış ya da bozuk dosya: varsayılanlarla devam.
+    }
+  }
+
+  /*
+   * Gizli pencere: asıl profilin yer imleri ve geçmişi SALT OKUNUR içe alınır.
+   * Yalnız bu iki alan alınır (parola, izin, indirme vb. gizli pencereye
+   * sızmaz). Sonrasında bu store diske HİÇ yazmaz: gizli pencerede eklenen
+   * yer imi/silinen geçmiş yalnızca o pencerenin ömrü boyunca bellekte kalır
+   * ve asıl profil dosyası (başka süreç yazıyor) ezilmez.
+   */
+  gizliPencereIcinYukle(asilDosya) {
+    this.salt = true;
+    if (!asilDosya || path.basename(asilDosya) !== 'pusula-veri.json') return false;
+    try {
+      const kayit = JSON.parse(fs.readFileSync(asilDosya, 'utf8'));
+      if (Array.isArray(kayit.yerImleri)) this.veri.yerImleri = kayit.yerImleri;
+      if (Array.isArray(kayit.gecmis)) this.veri.gecmis = kayit.gecmis;
+      this._yerImiDegisti();
+      return true;
+    } catch {
+      return false;
     }
   }
 
   // Geçici dosyaya yazıp yeniden adlandırıyoruz: yazma sırasındaki bir çökme
   // mevcut veriyi yarım bırakmasın.
   _diskeYaz() {
+    if (this.salt) return;
     try {
       fs.mkdirSync(path.dirname(this.dosya), { recursive: true });
       const gecici = this.dosya + '.tmp';
@@ -180,7 +249,8 @@ class Store {
     return this.veri.ayarlar;
   }
 
-  gecmiseEkle(url, baslik) {
+  gecmiseEkle(url, baslik, gizli = false) {
+    if (gizli || this.salt || process.argv.includes('--gizli-pencere')) return;
     if (!this.veri.ayarlar.gecmisiKaydet) return;
     // Yalnızca gerçek web adresleri: data:/blob:/view-source:/file: diske yazılmaz.
     if (!url || !/^https?:\/\//i.test(url)) return;
@@ -195,6 +265,9 @@ class Store {
     } else {
       this.veri.gecmis.unshift({ url, baslik: baslik || url, zaman: Date.now() });
       if (this.veri.gecmis.length > MAX_GECMIS) this.veri.gecmis.length = MAX_GECMIS;
+      if (typeof this.gecmisKancasi === 'function') {
+        try { this.gecmisKancasi(this.veri.gecmis[0]); } catch { /* kanca hatası kaydı durdurmasın */ }
+      }
     }
     this.kaydet();
   }
@@ -235,6 +308,22 @@ class Store {
     this.hemenKaydet();
   }
 
+  gecmisTekilSil(url, zaman) {
+    if (!url) return false;
+    const oncekiUzunluk = this.veri.gecmis.length;
+    this.veri.gecmis = this.veri.gecmis.filter(k => {
+      if (zaman != null) {
+        return !(k.url === url && k.zaman === zaman);
+      }
+      return k.url !== url;
+    });
+    if (this.veri.gecmis.length !== oncekiUzunluk) {
+      this.hemenKaydet();
+      return true;
+    }
+    return false;
+  }
+
   /*
    * Değişmez: "geçmişi kaydetme" kapalıyken saklanan geçmiş BOŞ tutulur.
    * gecmiseEkle() yalnızca yeni eklemeyi durduruyor; ayar kapatılmadan önce
@@ -262,10 +351,74 @@ class Store {
     return this.veri.yerImleri.some(y => y.url === url);
   }
 
-  yerImiDegistir(url, baslik) {
+  topluYerImiEkle(liste) {
+    if (!Array.isArray(liste)) return 0;
+    const mevcutlar = new Set(this.veri.yerImleri.map(y => y.url));
+    let eklenen = 0;
+    for (const item of liste) {
+      if (item && item.url && !mevcutlar.has(item.url)) {
+        mevcutlar.add(item.url);
+        this.veri.yerImleri.push({
+          url: item.url,
+          baslik: item.baslik || item.url,
+          zaman: item.zaman || Date.now(),
+          klasor: (item.klasor || '').trim()
+        });
+        eklenen++;
+      }
+    }
+    if (eklenen > 0) {
+      this._yerImiDegisti();
+      this.hemenKaydet();
+    }
+    return eklenen;
+  }
+
+  topluGecmisEkle(liste) {
+    if (!Array.isArray(liste) || !this.veri.ayarlar.gecmisiKaydet) return 0;
+    let eklenen = 0;
+    for (const item of liste) {
+      if (!item || !item.url || !/^https?:\/\//i.test(item.url)) continue;
+      this.veri.gecmis.push({
+        url: item.url,
+        baslik: item.baslik || item.url,
+        zaman: item.zaman || Date.now()
+      });
+      eklenen++;
+    }
+    if (this.veri.gecmis.length > MAX_GECMIS) {
+      this.veri.gecmis.length = MAX_GECMIS;
+    }
+    if (eklenen > 0) {
+      this.hemenKaydet();
+    }
+    return eklenen;
+  }
+
+  yerImiEkle(url, baslik, klasor = '') {
+    if (!url) return false;
+    const k = (klasor || '').trim();
+    const i = this.veri.yerImleri.findIndex(y => y.url === url);
+    if (i >= 0) {
+      if (baslik) this.veri.yerImleri[i].baslik = baslik.trim().slice(0, 200);
+      this.veri.yerImleri[i].klasor = k;
+    } else {
+      this.veri.yerImleri.unshift({
+        url,
+        baslik: (baslik || url).trim().slice(0, 200),
+        zaman: Date.now(),
+        klasor: k
+      });
+    }
+    this._yerImiDegisti();
+    this.kaydet();
+    return true;
+  }
+
+  yerImiDegistir(url, baslik, klasor = '') {
     const i = this.veri.yerImleri.findIndex(y => y.url === url);
     if (i >= 0) this.veri.yerImleri.splice(i, 1);
-    else this.veri.yerImleri.unshift({ url, baslik: baslik || url, zaman: Date.now() });
+    else this.veri.yerImleri.unshift({ url, baslik: baslik || url, zaman: Date.now(), klasor: (klasor || '').trim() });
     this._yerImiDegisti();
     this.kaydet();
     return i < 0;
@@ -276,8 +429,8 @@ class Store {
     if (i >= 0) { this.veri.yerImleri.splice(i, 1); this._yerImiDegisti(); this.kaydet(); }
   }
 
-  // Yer iminin adını ve/veya adresini değiştirir.
-  yerImiGuncelle(eskiUrl, { ad, url }) {
+  // Yer iminin adını, adresini ve/veya klasörünü değiştirir.
+  yerImiGuncelle(eskiUrl, { ad, url, klasor }) {
     const y = this.veri.yerImleri.find(k => k.url === eskiUrl);
     if (!y) return false;
     if (typeof ad === 'string') y.baslik = ad.trim().slice(0, 200) || y.baslik;
@@ -286,9 +439,61 @@ class Store {
       if (url !== eskiUrl && this.veri.yerImleri.some(k => k.url === url)) return false;
       y.url = url;
     }
+    if (typeof klasor === 'string') {
+      y.klasor = klasor.trim();
+    }
     this._yerImiDegisti();
     this.kaydet();
     return true;
+  }
+
+  yerImiKlasorleri() {
+    const set = new Set();
+    for (const y of this.veri.yerImleri) {
+      if (y.klasor && typeof y.klasor === 'string') {
+        const k = y.klasor.trim();
+        if (k) set.add(k);
+      }
+    }
+    return Array.from(set).sort();
+  }
+
+  yerImiKlasorSil(klasorAdi) {
+    if (!klasorAdi) return false;
+    const hedef = klasorAdi.trim();
+    const oncekiSayi = this.veri.yerImleri.length;
+    this.veri.yerImleri = this.veri.yerImleri.filter(y => {
+      const k = (y.klasor || '').trim();
+      return k !== hedef && !k.startsWith(hedef + '/');   // alt klasörler de gider
+    });
+    if (this.veri.yerImleri.length !== oncekiSayi) {
+      this._yerImiDegisti();
+      this.hemenKaydet();
+      return true;
+    }
+    return false;
+  }
+
+  yerImiKlasorYenidenAdlandir(eskiAd, yeniAd) {
+    if (!eskiAd) return false;
+    const eski = eskiAd.trim();
+    const yeni = (yeniAd || '').trim();
+    let degisti = false;
+    for (const y of this.veri.yerImleri) {
+      const k = (y.klasor || '').trim();
+      if (k === eski) {
+        y.klasor = yeni;
+        degisti = true;
+      } else if (k.startsWith(eski + '/')) {
+        y.klasor = yeni + k.slice(eski.length);   // alt klasörler yolu izler
+        degisti = true;
+      }
+    }
+    if (degisti) {
+      this._yerImiDegisti();
+      this.hemenKaydet();
+    }
+    return degisti;
   }
 
   // Verilen adres sırasına göre yeniden dizer; listede olmayanlar sonda kalır.
@@ -417,6 +622,72 @@ class Store {
     this.veri.cerezIstisnalari = [];
     this.hemenKaydet();
   }
+
+  parolaListesi(filtre = '') {
+    const dize = String(filtre || '').trim().toLowerCase();
+    const l = this.veri.parolalar || [];
+    if (!dize) return l;
+    return l.filter(p => (p.origin && p.origin.toLowerCase().includes(dize))
+      || (p.kullaniciAdi && p.kullaniciAdi.toLowerCase().includes(dize)));
+  }
+
+  parolaEkle({ origin, kullaniciAdi, parola }) {
+    if (!this.veri.parolalar) this.veri.parolalar = [];
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const kayit = {
+      id,
+      origin: String(origin || '').trim(),
+      kullaniciAdi: String(kullaniciAdi || '').trim(),
+      parola: String(parola || ''),
+      zaman: Date.now()
+    };
+    this.veri.parolalar.push(kayit);
+    this.kaydet();
+    return kayit;
+  }
+
+  parolaSil(id) {
+    if (!this.veri.parolalar) return false;
+    const ilk = this.veri.parolalar.length;
+    this.veri.parolalar = this.veri.parolalar.filter(p => p.id !== id);
+    if (this.veri.parolalar.length !== ilk) {
+      this.kaydet();
+      return true;
+    }
+    return false;
+  }
+
+  /** Arayüze özel anahtar ASLA verilmez; yalnızca gösterim alanları. */
+  gecisAnahtarListesi(filtre = '') {
+    const dize = String(filtre || '').trim().toLowerCase();
+    return (this.veri.gecisAnahtarlari || [])
+      .filter((k) => !dize || [k.rpId, k.rpAdi, k.kullaniciAdi, k.kullaniciGoruntu]
+        .some((a) => a && String(a).toLowerCase().includes(dize)))
+      .map(({ id, rpId, rpAdi, kullaniciAdi, kullaniciGoruntu, zaman, sonKullanim }) =>
+        ({ id, rpId, rpAdi, kullaniciAdi, kullaniciGoruntu, zaman, sonKullanim }));
+  }
+
+  gecisAnahtarHam() { return this.veri.gecisAnahtarlari || []; }
+
+  gecisAnahtarEkle(kayit) {
+    if (!this.veri.gecisAnahtarlari) this.veri.gecisAnahtarlari = [];
+    // Aynı site + aynı kullanıcı kimliği: yeni anahtar eskisinin yerini alır.
+    this.veri.gecisAnahtarlari = this.veri.gecisAnahtarlari
+      .filter((k) => !(k.rpId === kayit.rpId && k.kullaniciKimlik === kayit.kullaniciKimlik));
+    this.veri.gecisAnahtarlari.push(kayit);
+    this.hemenKaydet();
+    return kayit;
+  }
+
+  gecisAnahtarKullanildi() { this.hemenKaydet(); }
+
+  gecisAnahtarSil(id) {
+    const ilk = (this.veri.gecisAnahtarlari || []).length;
+    this.veri.gecisAnahtarlari = (this.veri.gecisAnahtarlari || []).filter((k) => k.id !== id);
+    if (this.veri.gecisAnahtarlari.length === ilk) return false;
+    this.hemenKaydet();
+    return true;
+  }
 }
 
-module.exports = { Store, DEFAULTS };
+module.exports = { Store, DEFAULTS, VARSAYILAN_YAN_PANELLER };

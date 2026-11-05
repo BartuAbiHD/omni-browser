@@ -1,7 +1,8 @@
 'use strict';
 
 // Electron gerektirmeyen saf mantık testleri: node test/dogrula.js
-const { resolveInput, search, prettyURL, SEARCH_ENGINES } = require('../src/urls');
+const { resolveInput, search, prettyURL, SEARCH_ENGINES, secilenUrlCoz } = require('../src/urls');
+const { flowmusicMi, flowmusicKodu } = require('../src/flowmusic');
 const { Blocker, kokAlanAdi, hostAl } = require('../src/blocker');
 const { LISTE } = require('../src/blocklist');
 const betikler = require('../src/betikler');
@@ -53,6 +54,17 @@ for (const [anahtar, motor] of Object.entries(SEARCH_ENGINES)) {
 
 esit('prettyURL bozuk girdide çökmemeli', prettyURL('kırık girdi'), 'kırık girdi');
 esit('prettyURL boşta boş dönmeli', prettyURL(''), '');
+
+/* ---- seçilen url çözümleme ---- */
+esit('secilenUrlCoz https adresini korumalı', secilenUrlCoz('https://www.youtube.com'), 'https://www.youtube.com');
+esit('secilenUrlCoz çıplak alan adını https yapmalı', secilenUrlCoz('youtube.com'), 'https://youtube.com');
+esit('secilenUrlCoz normal metinde null dönmeli', secilenUrlCoz('bu bir adres degil'), null);
+esit('secilenUrlCoz boş girdide null dönmeli', secilenUrlCoz('   '), null);
+
+/* ---- flowmusic yardımcısı ---- */
+esit('flowmusicMi flowmusic.app tanımalı', flowmusicMi('https://flowmusic.app/create'), true);
+esit('flowmusicMi başka sitelerde false dönmeli', flowmusicMi('https://google.com'), false);
+esit('flowmusicKodu baloncuk ve panel içermeli', flowmusicKodu().includes('fm-floating-bubble') && flowmusicKodu().includes('fm-helper-panel'), true);
 
 /* ---- kök alan adı ---- */
 
@@ -311,7 +323,46 @@ esit('her kayıt geçerli alan adı biçiminde', LISTE.filter(d => !ALAN_BICIMI.
   esit('açıkken politika temizlemez', d.gecmisPolitikasiniUygula(), false);
   esit('açıkken kayıt durur', d.veri.gecmis.length, 1);
 
+  // Gizli sekme geçmişe asla eklenmemeli.
+  d.gecmiseEkle('https://gizli.test', 'Gizli Site', true);
+  esit('gizli sekme geçmişe eklenmez', d.veri.gecmis.length, 1);
+
+  // Başlangıç sekmeleri ayarı diziyi korumalı.
+  d.ayarla('baslangicSekmeleri', ['https://vuhuv.com', 'https://www.arama.com']);
+  esit('başlangıç sekmeleri kaydedildi', d.veri.ayarlar.baslangicSekmeleri.length, 2);
+  esit('başlangıç sekmeleri sırası korundu', d.veri.ayarlar.baslangicSekmeleri[0], 'https://vuhuv.com');
+
   try { fs.unlinkSync(yol); } catch { /* olsun */ }
+}
+
+/* ---- gizli pencere: asıl yer imi/geçmiş görünür, ama hiçbir şey diske yazılmaz ---- */
+{
+  const { Store } = require('../src/store');
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const p = require('node:path');
+  const asilDizin = fs.mkdtempSync(p.join(os.tmpdir(), 'asil-'));
+  const asil = p.join(asilDizin, 'pusula-veri.json');
+  const ilk = JSON.stringify({
+    ayarlar: {},
+    parolalar: [{ id: '1', origin: 'https://s.test', kullaniciAdi: 'u', parola: 'gizli', zaman: 1 }],
+    yerImleri: [{ url: 'https://yi.test', baslik: 'YI', zaman: 1, klasor: '' }],
+    gecmis: [{ url: 'https://g.test', baslik: 'G', zaman: 1 }]
+  });
+  fs.writeFileSync(asil, ilk);
+  const g = new Store(p.join(asilDizin, 'gizli-profil.json'));
+  esit('gizli: asıl veri yüklendi', g.gizliPencereIcinYukle(asil), true);
+  esit('gizli: yer imleri görünür', g.veri.yerImleri.length, 1);
+  esit('gizli: geçmiş görünür', g.veri.gecmis.length, 1);
+  esit('gizli: parolalar sızmaz', g.veri.parolalar.length, 0);
+  g.gecmiseEkle('https://gezilen.test', 'Gezilen');
+  esit('gizli pencere geçmişe eklemez', g.veri.gecmis.length, 1);
+  g.yerImiEkle('https://yeni-yi.test', 'Y');
+  g.hemenKaydet();
+  esit('gizli: asıl dosya değişmedi', fs.readFileSync(asil, 'utf8'), ilk);
+  esit('gizli: profil dosyası yazılmadı', fs.existsSync(p.join(asilDizin, 'gizli-profil.json')), false);
+  esit('gizli: yanlış dosya adı reddedilir', new Store(p.join(asilDizin, 'x.json')).gizliPencereIcinYukle(p.join(asilDizin, 'baska.json')), false);
+  fs.rmSync(asilDizin, { recursive: true, force: true });
 }
 
 /* ---- sık gidilenler: gerçekten en çok ziyaret edilenler mi? ---- */
@@ -1033,6 +1084,142 @@ esit('her kayıt geçerli alan adı biçiminde', LISTE.filter(d => !ALAN_BICIMI.
   esit('iceAktar eşleşmeyi korur',
     JSON.stringify(geri.eslesenler('www.blackhatworld.com').map((e) => e.ad).sort()),
     JSON.stringify(bhw));
+
+  /* --- FlowMusic Helper Testleri --- */
+  const { flowmusicMi, flowmusicKodu, DIL_METINLERI } = require('../src/flowmusic');
+  esit('flowmusic alan adı eşleşir', flowmusicMi('https://flowmusic.app/studio'), true);
+  esit('flowmusic alt alan adı eşleşir', flowmusicMi('https://beta.flowmusic.app/create'), true);
+  esit('farklı alan adı eşleşmez', flowmusicMi('https://google.com'), false);
+
+  const trKodu = flowmusicKodu('tr');
+  esit('flowmusic kodu tr metinleri içerir', trKodu.includes('FlowMusic Promptuna Aktar'), true);
+  esit('flowmusic kodu yüzen baloncuk içerir', trKodu.includes('fm-floating-bubble'), true);
+  esit('flowmusic kodu güvenli aktarım fonksiyonu içerir', trKodu.includes('elemanaDegerYaz'), true);
+  esit('flowmusic kodu sayfa girdilerini ayıklar', trKodu.includes('sayfaGirdileriniTopla'), true);
+
+  const diller = ['tr', 'az', 'en', 'de', 'fr', 'es', 'it', 'pt', 'ru', 'ar', 'zh', 'ja'];
+  for (const d of diller) {
+    esit(`flowmusic ${d} dili mevcut`, Boolean(DIL_METINLERI[d]), true);
+    esit(`flowmusic ${d} aktarBtn mevcut`, Boolean(DIL_METINLERI[d].aktarBtn), true);
+    esit(`flowmusic ${d} aktarildi mevcut`, Boolean(DIL_METINLERI[d].aktarildi), true);
+  }
+
+  /* --- Anlaşılır İzin Adları Testleri --- */
+  const { DILLER } = require('../src/diller');
+  for (const d of diller) {
+    const metinler = DILLER[d].metin;
+    esit(`izin.clipboard-sanitized-write ${d} mevcut`, Boolean(metinler['izin.clipboard-sanitized-write']), true);
+    esit(`izin.clipboard-write ${d} mevcut`, Boolean(metinler['izin.clipboard-write']), true);
+    esit(`izin.window-management ${d} mevcut`, Boolean(metinler['izin.window-management']), true);
+    esit(`izin.bilinmeyen ${d} insani format`, !metinler['izin.bilinmeyen'].includes('bu izin'), true);
+  }
+
+  /* --- Başlangıç Sekmesi / Anasayfa Yedek Mantığı --- */
+  function baslangicAdresleriHesapla(ayarlar, gizliPencere = false) {
+    if (gizliPencere) return [];
+    const baslangic = Array.isArray(ayarlar.baslangicSekmeleri) && ayarlar.baslangicSekmeleri.map(x => typeof x === 'string' ? x.trim() : '').filter(Boolean);
+    if (baslangic && baslangic.length > 0) return baslangic;
+    if (ayarlar.anasayfa && typeof ayarlar.anasayfa === 'string' && ayarlar.anasayfa.trim()) {
+      return [ayarlar.anasayfa.trim()];
+    }
+    return [];
+  }
+
+  esit('başlangıç sekmeleri varsa onlar kullanılır',
+    JSON.stringify(baslangicAdresleriHesapla({ baslangicSekmeleri: ['https://a.test', 'https://b.test'], anasayfa: 'https://c.test' })),
+    JSON.stringify(['https://a.test', 'https://b.test']));
+
+  esit('başlangıç sekmeleri boşsa ve anasayfa varsa anasayfa kullanılır',
+    JSON.stringify(baslangicAdresleriHesapla({ baslangicSekmeleri: [], anasayfa: 'https://www.google.com' })),
+    JSON.stringify(['https://www.google.com']));
+
+  esit('başlangıç sekmeleri boşluklu diziyse ve anasayfa varsa anasayfa kullanılır',
+    JSON.stringify(baslangicAdresleriHesapla({ baslangicSekmeleri: ['  ', ''], anasayfa: 'https://www.google.com' })),
+    JSON.stringify(['https://www.google.com']));
+
+  esit('ikisi de boşsa boş liste döner',
+    JSON.stringify(baslangicAdresleriHesapla({ baslangicSekmeleri: [], anasayfa: '' })),
+    JSON.stringify([]));
+
+  esit('gizli pencerede başlangıç veya anasayfa açılmaz',
+    JSON.stringify(baslangicAdresleriHesapla({ baslangicSekmeleri: ['https://a.test'], anasayfa: 'https://b.test' }, true)),
+    JSON.stringify([]));
+
+  /* --- store.yerImiEkle Testi --- */
+  const { Store } = require('../src/store');
+  const geciciStore = new Store(require('os').tmpdir() + '/test-store-' + Date.now() + '.json');
+  geciciStore.yerImiEkle('https://ekle.test', 'Ekle Test');
+  esit('yerImiEkle yeni yer imini ekler', geciciStore.yerImiVarMi('https://ekle.test'), true);
+  geciciStore.yerImiEkle('https://ekle.test', 'Ekle Test Guncel');
+  esit('yerImiEkle tekrar çağrıldığında silmez günceller', geciciStore.yerImiVarMi('https://ekle.test'), true);
+  try { require('fs').unlinkSync(geciciStore.yol); } catch (_) {}
+
+  /* --- DPI Modülü (ByeDPI) Testleri --- */
+  const dpi = require('../src/dpi');
+  esit('sniOfsetiBul geçersiz arabellekte -1 döner', dpi.sniOfsetiBul(Buffer.from([0, 1, 2])), -1);
+  esit('dpi başlangıçta kapalıdır', dpi.durum().calisiyor, false);
+
+  for (const d of diller) {
+    const metinler = DILLER[d].metin;
+    esit(`ayar.dpi ${d} mevcut`, Boolean(metinler['ayar.dpi']), true);
+    esit(`ayar.dpiMod ${d} mevcut`, Boolean(metinler['ayar.dpiMod']), true);
+    esit(`ayar.dpiStrateji ${d} mevcut`, Boolean(metinler['ayar.dpiStrateji']), true);
+    esit(`ayar.dpiDahili ${d} mevcut`, Boolean(metinler['ayar.dpiDahili']), true);
+    esit(`baglam.yapistirVeGit ${d} mevcut`, Boolean(metinler['baglam.yapistirVeGit']), true);
+    esit(`baglam.sil ${d} mevcut`, Boolean(metinler['baglam.sil']), true);
+    esit(`ayar.varsayilanTarayici ${d} mevcut`, Boolean(metinler['ayar.varsayilanTarayici']), true);
+    esit(`ayar.varsayilanYap ${d} mevcut`, Boolean(metinler['ayar.varsayilanYap']), true);
+    esit(`ayar.varsayilanEvet ${d} mevcut`, Boolean(metinler['ayar.varsayilanEvet']), true);
+    esit(`banner.varsayilanMetin ${d} mevcut`, Boolean(metinler['banner.varsayilanMetin']), true);
+    esit(`banner.varsayilanYap ${d} mevcut`, Boolean(metinler['banner.varsayilanYap']), true);
+    esit(`banner.simdiDegil ${d} mevcut`, Boolean(metinler['banner.simdiDegil']), true);
+    esit(`panel.hakkinda ${d} mevcut`, Boolean(metinler['panel.hakkinda']), true);
+    esit(`hakkinda.baslik ${d} mevcut`, Boolean(metinler['hakkinda.baslik']), true);
+    esit(`hakkinda.surum ${d} mevcut`, Boolean(metinler['hakkinda.surum']), true);
+    esit(`hakkinda.guncel ${d} mevcut`, Boolean(metinler['hakkinda.guncel']), true);
+    esit(`hakkinda.denetle ${d} mevcut`, Boolean(metinler['hakkinda.denetle']), true);
+    esit(`hakkinda.motorlar ${d} mevcut`, Boolean(metinler['hakkinda.motorlar']), true);
+    esit(`hakkinda.telif ${d} mevcut`, Boolean(metinler['hakkinda.telif']), true);
+  }
+
+  /* --- Varsayılan Tarayıcı Ayarı Testi --- */
+  esit('store varsayilanOneriGizle varsayılan olarak false', geciciStore.ayarlar.varsayilanOneriGizle, false);
+
+  /* --- SpeedTest Sınıfı Testi --- */
+  const { SpeedTest } = require('../src/speedtest');
+  const st = new SpeedTest();
+  esit('speedtest başlangıçta pasif', st.aktif, false);
+  st.iptal();
+  esit('speedtest iptal edildi bayrağı', st.iptalEdildi, true);
+}
+
+/* ---- Vivaldi benzeri yan web panelleri testleri ---- */
+{
+  const { Store, DEFAULTS, VARSAYILAN_YAN_PANELLER } = require('../src/store');
+  const path = require('node:path');
+  esit('varsayılan yan paneller sayısı', VARSAYILAN_YAN_PANELLER.length, 6);
+  const ids = VARSAYILAN_YAN_PANELLER.map(p => p.id);
+  esit('wikipedia paneli mevcut', ids.includes('wikipedia'), true);
+  esit('gemini paneli mevcut', ids.includes('gemini'), true);
+  esit('claude paneli mevcut', ids.includes('claude'), true);
+  esit('chatgpt paneli mevcut', ids.includes('chatgpt'), true);
+  esit('deepseek paneli mevcut', ids.includes('deepseek'), true);
+  esit('grok paneli mevcut', ids.includes('grok'), true);
+
+  for (const p of VARSAYILAN_YAN_PANELLER) {
+    esit('panel url https ile başlamalı (' + p.id + ')', p.url.startsWith('https://'), true);
+  }
+
+  esit('ayarlar varsayılan kenar çubuğu açık', DEFAULTS.ayarlar.yanCubukGoster, true);
+  esit('ayarlar varsayılan yan panel kapalı', DEFAULTS.ayarlar.yanPanelAcik, false);
+  esit('ayarlar varsayılan aktif panel', DEFAULTS.ayarlar.yanPanelAktif, 'wikipedia');
+  esit('ayarlar varsayılan genişlik', DEFAULTS.ayarlar.yanPanelGenislik, 380);
+
+  const tmpDizin = path.join(require('node:os').tmpdir(), 'cvs-test-store-' + Date.now());
+  const s = new Store(path.join(tmpDizin, 'ayar.json'));
+  s.yukle();
+  esit('store yüklendiğinde yan paneller dolu', Array.isArray(s.ayarlar.yanPaneller) && s.ayarlar.yanPaneller.length === 6, true);
+  try { require('node:fs').rmSync(tmpDizin, { recursive: true, force: true }); } catch {}
 }
 
 if (hatalar.length) {

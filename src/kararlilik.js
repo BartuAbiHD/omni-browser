@@ -10,7 +10,7 @@
  *
  * KANIT: çöken minidump sembolize edildi ->
  *   extensions::WebstorePrivateGetReferrerChainFunction::Run()
- * (Girginos Browser.exe +0x721c52d, browser süreci). Temiz profilde ve adblock
+ * (CVS Browser.exe +0x721c52d, browser süreci). Temiz profilde ve adblock
  * TAMAMEN kapalıyken bile çöküyordu; yani suçlu adblock değil, bu eksik API.
  *
  * ÇÖZÜM: sayfanın kendi script'lerinden ÖNCE ana dünyaya girip

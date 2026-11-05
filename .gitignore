@@ -3,3 +3,8 @@ dagitim/
 *.pem
 *.log
 .simge-onizleme/
+
+# Gönderilmeyecekler
+mobil/
+undefined/
+sunucu/browservpn

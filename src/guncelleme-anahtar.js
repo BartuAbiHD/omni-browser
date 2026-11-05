@@ -21,17 +21,17 @@
 // Birden fazla anahtar kabul edilir: geçiş dönemlerinde eskisi de listede kalır.
 const ACIK_ANAHTARLAR = [
   // 2026-09 yayın anahtarı. Özel eşi çevrimdışı: pusula-yayin-anahtari.pem
-  '-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAnofV5S2o30UALXtJp24thzdi9226XBOlkfgV2kbOTxE=\n-----END PUBLIC KEY-----\n'
+  '-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA9Va54dIECEWXVduPxRY6evq5dQrlOEOB2luNB/QTknc=\n-----END PUBLIC KEY-----\n'
 ];
 
 // Manifest ve imza dosyasının bulunduğu dizin. Yalnızca https kabul edilir.
 //   <FEED_ADRESI>/pusula-guncelleme.json
 //   <FEED_ADRESI>/pusula-guncelleme.json.imza
-const FEED_ADRESI = 'https://browserapp.girginos.app/pusula';
+const FEED_ADRESI = 'https://github.com/BartuAbiHD/omni-browser/releases/latest/download';
 
 // Windows'ta kurulum dosyasının kod imzasındaki yayıncı adı. Sertifika
 // aldığınızda buraya yazın; electron-updater imzayı buna karşı doğrular.
-const YAYINCI_ADI = '';
+const YAYINCI_ADI = 'BartuAbiHD';
 
 function yapilandirilmisMi() {
   return ACIK_ANAHTARLAR.length > 0 && /^https:\/\//i.test(FEED_ADRESI);

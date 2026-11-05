@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'none'; img-src data: pusula-favicon:; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'none'; form-action 'none'">
-<title>Girginos Browser</title>
+<title>CVS Browser</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,6 +15,7 @@
     <button id="yeniSekme" class="ikon kucuk" title="Yeni sekme (Ctrl+T)" aria-label="Yeni sekme">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
     </button>
+    <div id="gizliGosterge" class="gizli-rozet" hidden>🕶️ Gizli</div>
     <div id="surukleAlan"></div>
   </header>
 
@@ -51,6 +52,10 @@
       </button>
     </div>
 
+    <button id="btnYanCubuk" class="ikon" title="Kenar çubuğu (Ctrl+Shift+S)" aria-label="Kenar çubuğu">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2" fill="none" stroke="currentColor"/><path d="M6 2v12" stroke="currentColor"/></svg>
+    </button>
+
     <!-- Genel reklam engelleyici aç/kapat. Adres kutusundaki #btnKalkan SİTE
          bazlıdır (bu sitede engelle); bu düğme TÜM siteler için genel ayarı
          çevirir. Karışmasın diye ayrı metafor: durdurma-daireli engel simgesi. -->
@@ -59,6 +64,10 @@
       <svg class="svg-engel-kapali" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.7" stroke-dasharray="2.3 2.1"/></svg>
     </button>
 
+    <span id="eklentiSabit" class="eklenti-sabit"></span>
+    <button id="btnEklentiler" class="ikon" title="Eklentiler" aria-label="Eklentiler">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5a1.5 1.5 0 0 1 3 0V5h3.5v3h1a1.5 1.5 0 0 1 0 3h-1v2.5H8.2v-1a1.5 1.5 0 0 0-3 0v1H2.5V10h1a1.5 1.5 0 0 0 0-3h-1V5H5z"/></svg>
+    </button>
     <button id="btnGecmis" class="ikon" title="Geçmiş (Ctrl+H)" aria-label="Geçmiş">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 4v4.2l2.8 1.7M14 8A6 6 0 1 1 3.2 4.4M2.4 2v3h3"/></svg>
     </button>
@@ -83,6 +92,19 @@
        çubuğundan önce duruyor. -->
   <div id="oneriler" role="listbox" hidden></div>
   <div id="yerImleriCubugu" hidden></div>
+
+  <div id="varsayilanBanner" class="varsayilan-banner" hidden>
+    <div class="varsayilan-metin-kutu">
+      <svg class="varsayilan-ikon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.8"/><path d="M10.4 5.6l-1.68 3.28L5.44 10.4l1.68-3.28z" fill="currentColor"/></svg>
+      <span id="varsayilanMetin"></span>
+    </div>
+    <div class="varsayilan-eylemler">
+      <button id="btnVarsayilanYap" class="varsayilan-btn-ana"></button>
+      <button id="btnVarsayilanKapat" class="ikon kucuk varsayilan-btn-kapat" title="Kapat" aria-label="Kapat">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>
+      </button>
+    </div>
+  </div>
 
   <div id="bulCubugu" hidden>
     <input id="bulGirdi" type="text" placeholder="Sayfada bul" aria-label="Sayfada bul">
@@ -114,6 +136,78 @@
   </div>
   <div id="panelIcerik"></div>
 </section>
+
+<aside id="yanCubuk" class="yan-cubuk" aria-label="Kenar Çubuğu">
+  <div class="yan-cubuk-ust">
+    <button id="btnYanCubukGecis" class="yan-btn" title="Kenar paneli (Ctrl+Shift+S)" aria-label="Kenar paneli">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2" fill="none" stroke="currentColor"/><path d="M6 2v12" stroke="currentColor"/></svg>
+    </button>
+  </div>
+  <div id="yanCubukWebPaneller" class="yan-cubuk-paneller" role="tablist" aria-label="Web Panelleri"></div>
+  <div class="yan-cubuk-ayrac"></div>
+  <div class="yan-cubuk-araclar">
+    <button id="btnYanYerImleri" class="yan-btn" title="Yer İmleri" aria-label="Yer İmleri">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h8a1 1 0 0 1 1 1v11l-5-3.5-5 3.5v-11a1 1 0 0 1 1-1z" fill="none" stroke="currentColor"/></svg>
+    </button>
+    <button id="btnYanGecmis" class="yan-btn" title="Geçmiş" aria-label="Geçmiş">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 4v4.2l2.8 1.7M14 8A6 6 0 1 1 3.2 4.4M2.4 2v3h3" fill="none" stroke="currentColor"/></svg>
+    </button>
+    <button id="btnYanIndirmeler" class="yan-btn" title="İndirilenler" aria-label="İndirilenler">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v7.5M4.8 7L8 10.2 11.2 7M3 13h10" fill="none" stroke="currentColor"/></svg>
+    </button>
+  </div>
+  <div class="yan-cubuk-alt">
+    <button id="btnYanPanelEkle" class="yan-btn" title="Web Paneli Ekle (+)" aria-label="Web Paneli Ekle">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</aside>
+
+<section id="yanPanelCerceve" class="yan-panel-cerceve" hidden aria-label="Kenar Paneli">
+  <div id="yanPanelBaslik" class="yan-panel-baslik">
+    <div class="yan-panel-baslik-sol">
+      <span id="yanPanelSimge" class="yan-panel-simge"></span>
+      <h2 id="yanPanelBaslikMetin" class="yan-panel-baslik-metin">Wikipedia</h2>
+    </div>
+    <div class="yan-panel-eylemler">
+      <button id="btnYanPanelMobil" class="ikon kucuk" title="Mobil / Masaüstü Görünüm" aria-label="Mobil / Masaüstü Görünüm">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4.5" y="2" width="7" height="12" rx="1.5" fill="none" stroke="currentColor"/><circle cx="8" cy="11.5" r="0.75" fill="currentColor"/></svg>
+      </button>
+      <button id="btnYanPanelGeri" class="ikon kucuk" title="Geri" aria-label="Geri">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>
+      </button>
+      <button id="btnYanPanelIleri" class="ikon kucuk" title="İleri" aria-label="İleri">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>
+      </button>
+      <button id="btnYanPanelYenile" class="ikon kucuk" title="Yenile" aria-label="Yenile">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5V5.5h-3"/></svg>
+      </button>
+      <button id="btnYanPanelAnasayfa" class="ikon kucuk" title="Ana Sayfa" aria-label="Ana Sayfa">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 7.5L8 2.5l5.5 5M4 7v6.5h8V7"/></svg>
+      </button>
+      <button id="btnYanPanelSekmedeAc" class="ikon kucuk" title="Sekmede Aç" aria-label="Sekmede Aç">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5H3.5A1.5 1.5 0 0 0 2 5v7.5A1.5 1.5 0 0 0 3.5 14H11a1.5 1.5 0 0 0 1.5-1.5V10M8.5 2.5H13.5v5M7 8.5L13.2 2.3"/></svg>
+      </button>
+      <button id="btnYanPanelKapat" class="ikon kucuk" title="Kapat (Esc)" aria-label="Kapat">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+  <div id="yanPanelIcerik" class="yan-panel-icerik" hidden></div>
+  <div id="yanPanelAyirici" class="yan-panel-ayirici" title="Yeniden boyutlandırmak için sürükleyin"></div>
+</section>
+
+<div id="yanPanelEkleModal" class="yan-modal-kapsayici" hidden>
+  <div class="yan-modal">
+    <h3>Web Paneli Ekle</h3>
+    <input id="yanPanelEkleAd" type="text" placeholder="Panel adı (ör. Reddit, YouTube)..." aria-label="Panel adı">
+    <input id="yanPanelEkleUrl" type="url" placeholder="https://..." aria-label="Web adresi">
+    <div class="yan-modal-butonlar">
+      <button id="btnYanPanelEkleIptal" class="dugme">İptal</button>
+      <button id="btnYanPanelEkleOnayla" class="dugme dugme-vurgulu">Ekle</button>
+    </div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>

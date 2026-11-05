@@ -183,7 +183,7 @@ class GuncellemeYoneticisi {
       // (VPN açıkken "Denetlenemedi: HTTP 407"). Bkz. src/vekil-istek.js.
       const y = await vekilliFetch(this.oturum, kok + '/' + yol, {
         cache: 'no-cache',
-        headers: { 'User-Agent': 'GirginosBrowser/' + this.app.getVersion() }
+        headers: { 'User-Agent': 'CVSBrowser/' + this.app.getVersion() }
       }, this.kimlikVer);
       if (y.status !== 200) throw new Error('HTTP ' + y.status + ' (' + yol + ')');
       const metin = await y.text();
@@ -197,6 +197,9 @@ class GuncellemeYoneticisi {
   /** @param {boolean} elle Kullanıcı düğmeye bastıysa true. */
   async kontrolEt(elle = false) {
     if (!this.etkin || this._calisiyor) return this.bilgi();
+    // İndirilmiş / inen güncellemeyi yeniden denetleyip ezme: Hakkında sayfası
+    // "güncel" gösterirken Ayarlar "indirildi" diyordu.
+    if (this.durum === DURUMLAR.HAZIR || this.durum === DURUMLAR.INIYOR) return this.bilgi();
     this._calisiyor = true;
     this.sebep = '';
     this._durumaGec(DURUMLAR.KONTROL);

@@ -6,14 +6,16 @@ const SEARCH_ENGINES = {
   yandex:     { ad: 'Yandex',     url: 'https://yandex.com.tr/search/?text=%s' },
   bing:       { ad: 'Bing',       url: 'https://www.bing.com/search?q=%s' },
   startpage:  { ad: 'Startpage',  url: 'https://www.startpage.com/sp/search?query=%s' },
-  brave:      { ad: 'Brave',      url: 'https://search.brave.com/search?q=%s' }
+  brave:      { ad: 'Brave',      url: 'https://search.brave.com/search?q=%s' },
+  vuhuv:      { ad: 'Vuhuv',      url: 'https://vuhuv.com/?q=%s' },
+  arama:      { ad: 'Arama.com',  url: 'https://www.arama.com/search.php?what=%s' }
 };
 
 // "scheme://..." biçimi kesin adrestir.
 const PROTOKOLLU = /^[a-z][a-z0-9+.-]*:\/\//i;
 // Eğik çizgisiz ama geçerli şemalar. "ornek.com:8080" bunlara benzediği için
 // şema kontrolünü serbest bırakmıyoruz.
-const OZEL_SEMA = /^(about|mailto|tel|view-source|chrome|file|data|blob|javascript):/i;
+const OZEL_SEMA = /^(about|mailto|tel|view-source|chrome|omni|file|data|blob|javascript):/i;
 const TEHLIKELI_SEMA = /^(javascript|data|blob):/i;
 
 const IPV4 = /^\d{1,3}(\.\d{1,3}){3}(:\d+)?$/;
@@ -75,4 +77,73 @@ function prettyURL(url) {
   }
 }
 
-module.exports = { SEARCH_ENGINES, resolveInput, search, prettyURL, metniGuvenliGoster };
+function secilenUrlCoz(metin) {
+  const s = String(metin || '').trim();
+  if (!s) return null;
+  if (/^https?:\/\//i.test(s)) return s;
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)+(\/.*)?$/i.test(s) && !/\s/.test(s)) return 'https://' + s;
+  return null;
+}
+
+const DAHILI_SAYFALAR = {
+  gecmis: 'gecmis',
+  history: 'gecmis',
+  yerimleri: 'yerImleri',
+  bookmarks: 'yerImleri',
+  indirilenler: 'indirmeler',
+  downloads: 'indirmeler',
+  ayarlar: 'ayarlar',
+  settings: 'ayarlar',
+  hakkinda: 'hakkinda',
+  about: 'hakkinda',
+  version: 'hakkinda',
+  parolalar: 'parolalar',
+  passwords: 'parolalar',
+  'hiz-testi': 'hizTesti',
+  hiztesti: 'hizTesti',
+  speedtest: 'hizTesti',
+  aktar: 'aktarma',
+  import: 'aktarma',
+  eklentiler: 'eklentiler',
+  extensions: 'eklentiler',
+  istatistik: 'istatistik',
+  istatistikler: 'istatistik',
+  statistics: 'istatistik',
+  stats: 'istatistik',
+  'speed-test': 'hizTesti',
+  flags: 'bayraklar',
+  bayraklar: 'bayraklar',
+  'new-tab': 'yenisekme',
+  'yeni-sekme': 'yenisekme',
+  newtab: 'yenisekme'
+};
+
+// Panel kodu -> adres çubuğunda görünen (İngilizce) kanonik ad. Türkçe adlar
+// eski bağlantılar için kabul edilmeye devam ediyor ama artık üretilmiyor.
+const PANEL_ADRES_ADI = {
+  gecmis: 'history',
+  yerImleri: 'bookmarks',
+  indirmeler: 'downloads',
+  ayarlar: 'settings',
+  hakkinda: 'about',
+  parolalar: 'passwords',
+  hizTesti: 'speed-test',
+  aktarma: 'import',
+  istatistik: 'statistics',
+  eklentiler: 'extensions',
+  bayraklar: 'flags'
+};
+
+function dahiliAdres(panelKodu) {
+  return 'omni://' + (PANEL_ADRES_ADI[panelKodu] || panelKodu);
+}
+
+function dahiliUrlPanel(url) {
+  if (!url) return null;
+  const m = String(url).trim().match(/^(?:chrome|omni):\/\/?([a-z0-9-]+)\/?$/i);
+  if (!m) return null;
+  const anahtar = m[1].toLowerCase();
+  return DAHILI_SAYFALAR[anahtar] || null;
+}
+
+module.exports = { SEARCH_ENGINES, resolveInput, search, prettyURL, metniGuvenliGoster, secilenUrlCoz, dahiliUrlPanel, dahiliAdres };

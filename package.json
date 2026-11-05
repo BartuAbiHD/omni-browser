@@ -1,17 +1,17 @@
 {
-  "name": "girginos-browser",
-  "productName": "Girginos Browser",
-  "version": "0.5.13",
-  "description": "Girginos Browser — gizlilik odaklı web tarayıcısı",
+  "name": "cvs-browser",
+  "productName": "CVS Browser",
+  "version": "2026.11.7",
+  "description": "CVS Browser — gizlilik odaklı web tarayıcısı",
   "main": "main.js",
-  "author": "Girginos",
+  "author": "BartubiHD",
   "license": "MIT",
   "private": true,
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "test": "node test/dogrula.js && node test/guvenlik.js && node test/guncelleme.js && node test/sozlesme.js && node test/kararlilik.js && node test/ubo-motor.js && node test/prosedurel.js && node test/vpn.js",
-    "test-electron": "electron test/electron-cerez.js && electron test/electron-kozmetik.js && electron test/electron-vekil.js && electron test/electron-favicon.js && electron test/electron-https.js && electron test/electron-anti-adblock.js && node test/electron-betik.js && node test/electron-reset.js && node test/electron-oneri.js && node test/electron-tamekran.js && node test/electron-uygulama.js",
+    "test": "node test/dogrula.js && node test/guvenlik.js && node test/guncelleme.js && node test/sozlesme.js && node test/kararlilik.js && node test/ubo-motor.js && node test/prosedurel.js && node test/vpn.js && node test/aktar.js && node test/tema.js && node test/eklenti.js && node test/eklenti-api.js && node test/eklenti-baglam.js && node test/eklenti-veri.js && node test/eklenti-oturum.js && node test/varsayilan.js && node test/yenilikler.js && node test/gecis.js && node test/proton-gecis.js",
+    "test-electron": "electron test/electron-cerez.js && electron test/electron-kozmetik.js && electron test/electron-vekil.js && electron test/electron-favicon.js && electron test/electron-https.js && electron test/electron-anti-adblock.js && node test/electron-betik.js && node test/electron-reset.js && node test/electron-oneri.js && node test/electron-tamekran.js && node test/electron-uygulama.js && electron test/electron-eklenti.js && electron test/electron-eklenti-uyumluluk.js && electron test/electron-eklenti-eval.js && node test/electron-eklenti-api.js && node test/electron-eklenti-kimlik.js && node test/electron-eklenti-ekran.js && node test/electron-eklenti-arayuz.js && node test/electron-indirme-klasoru.js",
     "anahtar-uret": "node scripts/anahtar-uret.js",
     "paket": "electron-builder",
     "paket-dizin": "electron-builder --dir",
@@ -37,9 +37,9 @@
     "electron-updater": "^6.8.9"
   },
   "build": {
-    "appId": "app.girginos.browser",
-    "productName": "Girginos Browser",
-    "copyright": "Girginos",
+    "appId": "app.cvs.browser",
+    "productName": "CVS Browser",
+    "copyright": "CVS Browser",
     "directories": {
       "output": "dagitim",
       "buildResources": "yapi-kaynaklari"
@@ -53,17 +53,19 @@
       "!**/*.map"
     ],
     "win": {
+      "icon": "yapi-kaynaklari/icon.ico",
       "target": [
         "nsis"
       ],
-      "artifactName": "girginos.${ext}"
+      "artifactName": "cvs-browser.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "deleteAppDataOnUninstall": false,
-      "uninstallerIcon": "yapi-kaynaklari/icon.ico"
+      "uninstallerIcon": "yapi-kaynaklari/icon.ico",
+      "include": "yapi-kaynaklari/installer.nsh"
     },
     "mac": {
       "target": [
@@ -71,19 +73,19 @@
         "zip"
       ],
       "category": "public.app-category.productivity",
-      "artifactName": "girginos-${arch}.${ext}"
+      "artifactName": "cvs-browser-${arch}.${ext}"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
       "category": "Network",
-      "artifactName": "girginos-${arch}.${ext}"
+      "artifactName": "cvs-browser-${arch}.${ext}"
     },
     "publish": [
       {
         "provider": "generic",
-        "url": "https://browserapp.girginos.app/pusula",
+        "url": "https://github.com/BartuAbiHD/omni-browser/releases/latest/download",
         "channel": "latest"
       }
     ]

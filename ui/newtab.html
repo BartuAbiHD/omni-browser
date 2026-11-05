@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; img-src data: pusula-favicon:; base-uri 'none'; form-action 'none'">
-<title>Yeni sekme</title>
+<title>CVS Browser</title>
 <style>
   :root {
     --zemin: #f4f6f9; --kart: #fff; --metin: #1c1f26; --metin2: #6b7280;
@@ -43,6 +43,41 @@
     :root { --gok1: #0f1420; --gok2: #16181d;
             --dag1: rgba(52, 66, 96, .70); --dag2: rgba(38, 50, 76, .75); --dag3: rgba(24, 33, 52, .85);
             --sis: rgba(120, 150, 200, .10); }
+  }
+  body[data-tema-stil="gece-mavisi"] {
+    --zemin: #0b1329; --kart: #16244c; --metin: #f0f4ff; --metin2: #94a3b8;
+    --cizgi: #1e3264; --vurgu: #38bdf8; --vurgu-yumusak: rgba(56, 189, 248, .18);
+    --gok1: #070d1d; --gok2: #0b1329;
+  }
+  body[data-tema-stil="mor-nebula"] {
+    --zemin: #140d21; --kart: #281944; --metin: #faf5ff; --metin2: #a89bb8;
+    --cizgi: #3d2668; --vurgu: #c084fc; --vurgu-yumusak: rgba(192, 132, 252, .18);
+    --gok1: #0d0817; --gok2: #140d21;
+  }
+  body[data-tema-stil="zumrut"] {
+    --zemin: #061914; --kart: #10332a; --metin: #f0fdf4; --metin2: #86a798;
+    --cizgi: #194a3d; --vurgu: #34d399; --vurgu-yumusak: rgba(52, 211, 153, .18);
+    --gok1: #03110d; --gok2: #061914;
+  }
+  body[data-tema-stil="gun-batimi"] {
+    --zemin: #200f12; --kart: #3d1b22; --metin: #fff5f5; --metin2: #b8989c;
+    --cizgi: #592531; --vurgu: #fb923c; --vurgu-yumusak: rgba(251, 146, 60, .18);
+    --gok1: #16080b; --gok2: #200f12;
+  }
+  body[data-tema-stil="saf-koyu"] {
+    --zemin: #000000; --kart: #121212; --metin: #f5f5f5; --metin2: #9e9e9e;
+    --cizgi: #242424; --vurgu: #60a5fa; --vurgu-yumusak: rgba(96, 165, 250, .18);
+    --gok1: #000000; --gok2: #000000;
+  }
+  body.ozel-duvarkagidi {
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+  }
+  body.ozel-duvarkagidi::before,
+  body.ozel-duvarkagidi::after {
+    display: none !important;
   }
   body { background: linear-gradient(180deg, var(--gok1) 0%, var(--gok2) 55%, var(--zemin) 100%); }
   body::before, body::after {
@@ -103,7 +138,7 @@
 
   form {
     display: flex; align-items: center; gap: 6px;
-    max-width: 620px; margin: 0 auto 40px;
+    max-width: 620px; margin: 0 auto 14px;
     padding: 6px 6px 6px 4px;
     background: var(--kart);
     border: 1px solid var(--cizgi); border-radius: 30px;
@@ -131,6 +166,14 @@
   button[type="submit"] svg { width: 17px; height: 17px; }
   button[type="submit"]:hover { filter: brightness(1.08); }
   button[type="submit"]:active { transform: scale(.97); }
+
+  .hedefler { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 700px; margin: 0 auto 36px; }
+  .hedef {
+    padding: 5px 12px; border: 1px solid var(--cizgi); border-radius: 16px;
+    background: var(--kart); color: var(--metin2); font: inherit; font-size: 12.5px; cursor: pointer;
+  }
+  .hedef:hover { border-color: var(--vurgu); color: var(--metin); }
+  .hedef.secili { background: var(--vurgu); border-color: var(--vurgu); color: #fff; font-weight: 600; }
 
   /* ---- bölüm başlıkları ---- */
   h2 {
@@ -215,8 +258,73 @@
     border-radius: 20px; background: color-mix(in srgb, var(--kart) 78%, transparent);
     color: var(--metin2); font-size: 12.5px; text-align: center;
   }
+  .alt[hidden] { display: none; }
   .alt b { color: var(--vurgu); font-weight: 600; }
   .bos-not { color: var(--metin2); font-size: 12.5px; padding: 4px 2px; }
+
+  /* ---- gizli sekme sayfası ---- */
+  body.gizli-mod {
+    --zemin: #111216;
+    --kart: #191b22;
+    --metin: #f3f4f6;
+    --metin2: #9da3af;
+    --cizgi: #282b36;
+    --vurgu: #8b5cf6;
+    --vurgu-yumusak: rgba(139, 92, 246, .16);
+    --golge: 0 4px 20px rgba(0, 0, 0, .45);
+    --gok1: #08090d;
+    --gok2: #111216;
+    --dag1: rgba(28, 24, 46, .75);
+    --dag2: rgba(20, 18, 34, .80);
+    --dag3: rgba(13, 11, 23, .90);
+    --sis: rgba(139, 92, 246, .05);
+  }
+  .gizli-bilgi-karti {
+    max-width: 620px;
+    margin: 0 auto 36px;
+    padding: 24px;
+    border: 1px solid var(--cizgi);
+    border-radius: 16px;
+    background: var(--kart);
+    box-shadow: var(--golge);
+    text-align: center;
+  }
+  .gizli-simge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--vurgu-yumusak);
+    color: var(--vurgu);
+    margin-bottom: 12px;
+  }
+  .gizli-simge svg { width: 28px; height: 28px; }
+  .gizli-baslik {
+    margin: 0 0 8px;
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--metin);
+    letter-spacing: -.01em;
+    text-transform: none;
+  }
+  .gizli-aciklama {
+    margin: 0 0 16px;
+    font-size: 13.5px;
+    color: var(--metin2);
+    line-height: 1.55;
+  }
+  .gizli-kaydedilmez {
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--vurgu-yumusak);
+    color: var(--metin);
+    font-size: 12.5px;
+    line-height: 1.5;
+    text-align: start;
+  }
 </style>
 </head>
 <body>
@@ -226,7 +334,7 @@
         <circle cx="20" cy="20" r="16"/>
         <path d="M26 14l-4.2 8.2L13.6 26l4.2-8.2z" fill="currentColor" stroke="none"/>
       </svg>
-      <h1>Girginos Browser<span>gizlilik odaklı tarayıcı</span></h1>
+      <h1>CVS Browser<span>gizlilik odaklı tarayıcı</span></h1>
     </div>
 
     <form id="aramaFormu" autocomplete="off">
@@ -236,6 +344,20 @@
         <span>Ara</span>
       </button>
     </form>
+    <div class="hedefler" id="hedefler" role="group" aria-label="Arama hedefi"></div>
+
+    <section id="gizliBilgi" class="gizli-bilgi-karti" hidden>
+      <div class="gizli-simge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/>
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M3 21l18-18"/>
+        </svg>
+      </div>
+      <h2 id="gizliBaslik" class="gizli-baslik"></h2>
+      <p id="gizliAciklama" class="gizli-aciklama"></p>
+      <div id="gizliKaydedilmez" class="gizli-kaydedilmez"></div>
+    </section>
 
     <section id="sikBolum">
       <h2>Sık gidilenler</h2>

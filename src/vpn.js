@@ -30,7 +30,8 @@ const { adresCoz, HEP_ATLANAN } = require('./vekil');
  * yalnızca dil-bağımsız kimlik var (ulke kodu + aynı ülkedeki sunucu sırası).
  */
 const SUNUCULAR = [
-  { id: 'de-1', ulke: 'DE', no: 1, sema: 'https', host: 'de-browservpn.girginos.app', port: 443, limitMbps: 100 }
+  { id: 'de-1', ulke: 'DE', no: 1, sema: 'https', host: 'de-browservpn.girginos.app', port: 443, limitMbps: 100 },
+  { id: 'tr-1', ulke: 'TR', no: 1, sema: 'https', host: 'vpn.barindirici.com.tr', port: 4433, limitMbps: 100 }
 ];
 
 function sunucuBul(id) {

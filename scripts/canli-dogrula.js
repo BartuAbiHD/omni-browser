@@ -17,15 +17,28 @@ const anahtarlar = require('../src/guncelleme-anahtar');
 
 const FEED = anahtarlar.FEED_ADRESI;
 
-function cek(url) {
+// GitHub "releases/latest/download/..." adresi varlığa 302 ile yönlendirir.
+function iste(url, basliklar, kalan = 5) {
   return new Promise((coz, red) => {
-    https.get(url, { headers: { 'User-Agent': 'GirginosBrowser/canli-dogrula' } }, (y) => {
-      if (y.statusCode !== 200) { y.resume(); return red(new Error(url + ' -> HTTP ' + y.statusCode)); }
-      const parcalar = [];
-      y.on('data', (p) => parcalar.push(p));
-      y.on('end', () => coz(Buffer.concat(parcalar)));
+    https.get(url, { headers: { 'User-Agent': 'CVSBrowser/canli-dogrula', ...basliklar } }, (y) => {
+      if ([301, 302, 303, 307, 308].includes(y.statusCode) && y.headers.location) {
+        y.resume();
+        if (kalan <= 0) return red(new Error(url + ' -> çok fazla yönlendirme'));
+        const hedef = new URL(y.headers.location, url).href;
+        if (!/^https:\/\//i.test(hedef)) return red(new Error(url + ' -> https olmayan yönlendirme'));
+        return iste(hedef, basliklar, kalan - 1).then(coz, red);
+      }
+      coz(y);
     }).on('error', red);
   });
+}
+
+async function cek(url) {
+  const y = await iste(url, {});
+  if (y.statusCode !== 200) { y.resume(); throw new Error(url + ' -> HTTP ' + y.statusCode); }
+  const parcalar = [];
+  for await (const p of y) parcalar.push(p);
+  return Buffer.concat(parcalar);
 }
 
 let gecen = 0;
@@ -115,12 +128,10 @@ function esit(ad, a, b) {
   esit('sürüm latest.yml == manifest', /^version:\s*(\S+)/m.exec(latest)[1], manifest.surum);
 
   console.log('\n6) Paketin ilk baytları gerçekten indirilebiliyor mu (Range)');
-  const parca = await new Promise((coz, red) => {
-    https.get(manifest.dosyalar['win32-x64'].url, { headers: { Range: 'bytes=0-1' } }, (y) => {
-      const p = [];
-      y.on('data', (d) => p.push(d));
-      y.on('end', () => coz({ kod: y.statusCode, veri: Buffer.concat(p) }));
-    }).on('error', red);
+  const parca = await iste(manifest.dosyalar['win32-x64'].url, { Range: 'bytes=0-1' }).then(async (y) => {
+    const p = [];
+    for await (const d of y) p.push(d);
+    return { kod: y.statusCode, veri: Buffer.concat(p) };
   });
   esit('kısmi içerik (206)', parca.kod, 206);
   esit('MZ başlığı (Windows çalıştırılabilir)', parca.veri.toString('latin1'), 'MZ');

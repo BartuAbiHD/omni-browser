@@ -12,7 +12,7 @@ const { prosedurelCoz, ProsedurelDepo, yerlesikProsedurel } = require('./prosedu
 /*
  * Filtre listesi yöneticisi.
  *
- * Girginos Browser engelleyicisi ağ tarafında yalnızca "şu ana makineye giden
+ * CVS Browser engelleyicisi ağ tarafında yalnızca "şu ana makineye giden
  * üçüncü taraf istekleri kes" diyebiliyor. Adblock Plus söz diziminin geri
  * kalanı (yol kalıpları, kaynak türü kısıtları, $domain= bağlamı) bizde
  * karşılıksız. Bu yüzden ayrıştırıcı SADECE anlamını birebir koruyabildiğimiz

@@ -1,6 +1,6 @@
-# Girginos Browser
+# CVS Browser
 
-A privacy-focused desktop web browser. Interface available in 11 languages.
+A privacy-focused desktop web browser. Interface available in 12 languages.
 
 *[Türkçe README](README.tr.md)*
 
@@ -47,11 +47,11 @@ renderer–main IPC/DOM contract and the key integrity of the 11 language files.
 | Site icons | Downloaded once and served from a local cache, no remote requests |
 | Updates | Ed25519-signed release manifest, automatic checks, channel selection |
 | Appearance | Light / dark / follow-system, applied to the UI, built-in pages and native menus |
-| Languages | Türkçe, English, Deutsch, Français, Español, Italiano, Português, Русский, العربية (RTL), 简体中文, 日本語 |
+| Languages | Türkçe, Azərbaycanca, English, Deutsch, Français, Español, Italiano, Português, Русский, العربية (RTL), 简体中文, 日本語 |
 
 ## Keyboard shortcuts
 
-`Ctrl+T` new tab · `Ctrl+W` close tab · `Ctrl+Tab` switch tab · `Ctrl+1..9` go to tab
+`Ctrl+T` new tab · `Ctrl+Shift+N` new incognito tab · `Ctrl+N` new window · `Ctrl+W` close tab · `Ctrl+Tab` switch tab · `Ctrl+1..9` go to tab
 `Ctrl+L` address bar · `Ctrl+F` find in page · `Ctrl+R` reload · `Alt+←/→` back/forward
 `Ctrl+D` bookmark · `Ctrl+H` history · `Ctrl+J` downloads · `Ctrl+Shift+B` bookmarks bar
 `Ctrl+,` settings · `Ctrl+ +/-/0` zoom · `F11` fullscreen · `Ctrl+Shift+I` developer tools
@@ -96,7 +96,7 @@ Lists are checked roughly 15 seconds after first launch and then every 6 hours,
 and refreshed according to the list's own `! Expires` directive (usually 4
 days). Downloads happen from a separate, non-persistent session, so no cookies
 are kept. The parsed form is cached under
-`%APPDATA%/Girginos Browser/listeler/*.json`; if the network is unavailable the
+`%APPDATA%/CVS Browser/listeler/*.json`; if the network is unavailable the
 last good copy stays in use. You can add your own list from Settings (an https
 address in Adblock Plus, hosts, or plain domain format).
 
@@ -142,7 +142,7 @@ everything" breaks pages. About 85% of today's lists pass through this filter.
 - The page view is drawn as a native layer above the interface. Because of this,
   dropdowns, the downloads menu and the find bar cannot overlay the page; they
   sit in the interface flow and push the page down when opened.
-- Data is stored under `%APPDATA%/Girginos Browser/pusula-veri.json`, written
+- Data is stored under `%APPDATA%/CVS Browser/pusula-veri.json`, written
   atomically via a temporary file plus rename.
 
 ## New tab announcement area
@@ -237,7 +237,7 @@ differently.
 **The engine (Chromium/V8/Skia).** In 2026 dozens of memory-safety bugs were
 fixed in Chrome, including six zero-days exploited in the wild. We do not write
 this code and cannot fix it — **the only defence is keeping the engine current.**
-Hence the rule: *Girginos Browser is never released on an end-of-life Electron
+Hence the rule: *CVS Browser is never released on an end-of-life Electron
 version.* Electron supports only the latest three major versions; the version pin
 in `package.json` must be checked before every release.
 

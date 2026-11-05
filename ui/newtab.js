@@ -10,11 +10,34 @@ const MOTORLAR = {
   yandex: 'https://yandex.com.tr/search/?text=',
   bing: 'https://www.bing.com/search?q=',
   startpage: 'https://www.startpage.com/sp/search?query=',
-  brave: 'https://search.brave.com/search?q='
+  brave: 'https://search.brave.com/search?q=',
+  vuhuv: 'https://vuhuv.com/?q=',
+  arama: 'https://www.arama.com/search.php?what='
 };
 
+// Yeni sekmedeki seçici: arama motorları + site içi aramalar.
+const HEDEFLER = [
+  ['google', 'Google', MOTORLAR.google],
+  ['duckduckgo', 'DuckDuckGo', MOTORLAR.duckduckgo],
+  ['yandex', 'Yandex', MOTORLAR.yandex],
+  ['bing', 'Bing', MOTORLAR.bing],
+  ['startpage', 'Startpage', MOTORLAR.startpage],
+  ['github', 'GitHub', 'https://github.com/search?q='],
+  ['youtube', 'YouTube', 'https://www.youtube.com/results?search_query='],
+  ['videovitrini', 'Video Vitrini', 'https://videovitrini.com/search?keyword='],
+  ['wikipedia', 'Wikipedia', 'https://' + (/^[a-z]{2,3}$/.test(new URLSearchParams(location.search).get('dil') || '') ? new URLSearchParams(location.search).get('dil') : 'tr') + '.wikipedia.org/w/index.php?search=']
+];
+
+// @kullanici (boşluksuz) yazıldığında profil sayfasına gider.
+const PROFIL_ADRESLERI = { youtube: 'https://yton.tr/', videovitrini: 'https://videovitrini.com/' };
+
 const par = new URLSearchParams(location.search);
-const motor = MOTORLAR[par.get('motor')] || MOTORLAR.duckduckgo;
+let hedef = par.get('motor') in MOTORLAR ? par.get('motor') : 'duckduckgo';
+try {
+  const k = localStorage.getItem('pusula-arama-hedefi');
+  if (HEDEFLER.some(h => h[0] === k)) hedef = k;
+} catch (_) {}
+const hedefAdresi = () => (HEDEFLER.find(h => h[0] === hedef) || HEDEFLER[1])[2];
 
 document.documentElement.lang = par.get('dil') || 'tr';
 document.documentElement.dir = par.get('yon') === 'rtl' ? 'rtl' : 'ltr';
@@ -26,14 +49,53 @@ function jsonPar(ad) {
   } catch { return []; }
 }
 const sonlar = jsonPar('sonlar');
+
+function temayiUygula() {
+  try {
+    const stil = localStorage.getItem('pusula_tema_stil');
+    const resim = localStorage.getItem('pusula_tema_resmi');
+    if (stil) document.body.dataset.temaStil = stil;
+    else delete document.body.dataset.temaStil;
+    if (resim) {
+      document.body.style.backgroundImage = 'url("' + resim + '")';
+      document.body.classList.add('ozel-duvarkagidi');
+    } else {
+      document.body.style.backgroundImage = '';
+      document.body.classList.remove('ozel-duvarkagidi');
+    }
+  } catch (_) {}
+}
+temayiUygula();
+window.addEventListener('storage', (e) => {
+  if (e.key === 'pusula_tema_stil' || e.key === 'pusula_tema_resmi') temayiUygula();
+});
 const duyurular = jsonPar('duyurular');
+
+const isGizli = par.get('gizli') === '1';
 
 // Metinler ana süreçte çevrilip buraya hazır geliyor.
 let M = {};
 try { M = JSON.parse(par.get('metin') || '{}'); } catch { /* varsayılanlar */ }
 const m = (anahtar, varsayilan) => (typeof M[anahtar] === 'string' && M[anahtar]) || varsayilan;
 
-document.querySelector('.marka span').textContent = m('slogan', 'gizlilik odaklı tarayıcı');
+document.title = isGizli ? m('gizliSekme', 'Gizli sekme') : m('yeniSekme', 'Yeni sekme');
+
+if (isGizli) {
+  document.body.classList.add('gizli-mod');
+  document.querySelector('.marka span').textContent = m('gizliBaslik', 'Gizli sekmedesiniz');
+  document.getElementById('sikBolum').hidden = true;
+  document.getElementById('duyuruBolum').hidden = true;
+  document.getElementById('alt').hidden = true;
+  const gizliBilgi = document.getElementById('gizliBilgi');
+  if (gizliBilgi) {
+    gizliBilgi.hidden = false;
+    document.getElementById('gizliBaslik').textContent = m('gizliBaslik', 'Gizli sekmedesiniz');
+    document.getElementById('gizliAciklama').textContent = m('gizliAciklama', '');
+    document.getElementById('gizliKaydedilmez').textContent = m('gizliKaydedilmez', '');
+  }
+} else {
+  document.querySelector('.marka span').textContent = m('slogan', 'gizlilik odaklı tarayıcı');
+}
 // Yalnızca metin span'ine yaz: butonun içindeki büyüteç SVG'si korunsun.
 document.querySelector('#aramaFormu button[type="submit"] span').textContent = m('ara', 'Ara');
 document.getElementById('sorgu').placeholder = m('araIpucu', 'Ara ya da adres yaz');
@@ -49,9 +111,32 @@ document.getElementById('aramaFormu').addEventListener('submit', (e) => {
   const q = document.getElementById('sorgu').value.trim();
   if (!q) return;
   // Adres gibi görünüyorsa doğrudan git; ana süreçteki çözümleyiciyle aynı sezgi.
+  if (PROFIL_ADRESLERI[hedef] && /^@[^\s@\/?#]+$/.test(q)) {
+    location.href = PROFIL_ADRESLERI[hedef] + encodeURIComponent(q.slice(1)).replace(/^/, '@');
+    return;
+  }
   location.href = /^https?:\/\//i.test(q) ? q
-    : (ADRES_GIBI.test(q) && !/\s/.test(q) ? 'https://' + q : motor + encodeURIComponent(q));
+    : (ADRES_GIBI.test(q) && !/\s/.test(q) ? 'https://' + q : hedefAdresi() + encodeURIComponent(q));
 });
+
+function hedefleriCiz() {
+  const kap = document.getElementById('hedefler');
+  kap.replaceChildren();
+  for (const [id, ad] of HEDEFLER) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'hedef' + (id === hedef ? ' secili' : '');
+    b.textContent = ad;
+    b.addEventListener('click', () => {
+      hedef = id;
+      try { localStorage.setItem('pusula-arama-hedefi', id); } catch (_) {}
+      hedefleriCiz();
+      document.getElementById('sorgu').focus();
+    });
+    kap.appendChild(b);
+  }
+}
+hedefleriCiz();
 
 /* ---- ortak ---- */
 
@@ -310,5 +395,7 @@ document.addEventListener('mousedown', (e) => { if (acikMenu && !acikMenu.contai
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') menuKapat(); });
 window.addEventListener('blur', menuKapat);
 
-ciz();
-duyurulariCiz();
+if (!isGizli) {
+  ciz();
+  duyurulariCiz();
+}

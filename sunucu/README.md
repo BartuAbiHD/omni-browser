@@ -1,6 +1,6 @@
-# browservpn — Girginos Browser VPN arka ucu
+# browservpn — CVS Browser VPN arka ucu
 
-Girginos Browser'ın "VPN" özelliğinin sunucu tarafı: **TLS'li HTTP forward
+CVS Browser'ın "VPN" özelliğinin sunucu tarafı: **TLS'li HTTP forward
 proxy**. Tarayıcı bunu bir `https` proxy olarak kullanır; tarayıcı ↔ sunucu
 trafiği TLS ile şifrelenir. Sistem geneli bir TUN tüneli değildir — yalnızca
 tarayıcının gezinme oturumu bu proxy'den geçer (WebRTC sızıntısı istemci
@@ -65,7 +65,7 @@ HTTP/2 üzerinde `CONNECT` hijack çalışmaz.
 
 ```ini
 [Unit]
-Description=Girginos Browser VPN proxy
+Description=CVS Browser VPN proxy
 After=network-online.target
 Wants=network-online.target
 

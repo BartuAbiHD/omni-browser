@@ -16,18 +16,59 @@ const SIMGE = {
     + '<path d="M8 6.4v3.1"/><path d="M8 11.4v.3"/></svg>',
   indir: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.8v7.1"/>'
     + '<path d="M5.2 7.2 8 10l2.8-2.8"/><path d="M3.4 13h9.2"/></svg>',
+  duraklat: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.6 3.6v8.8M10.4 3.6v8.8"/></svg>',
+  surdur: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.2 3.4l7 4.6-7 4.6z"/></svg>',
+  sil: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.4 4.8h9.2M6.4 4.8V3.2h3.2v1.6M4.7 4.8l.6 8.2h5.4l.6-8.2"/></svg>',
   soru: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/>'
     + '<path d="M6.4 6.2a1.6 1.6 0 1 1 1.9 1.9v1"/><path d="M8.3 11.2v.3"/></svg>'
 };
 
 function bos() {
+  kapatinca = null;
+  for (const m of document.querySelectorAll('.ym-menu')) m.remove();
+  kutu.style.display = '';
   kutu.replaceChildren();
   kutu.className = '';
+  ortu.className = '';
 }
 
 /* ---------------- indirilenler ---------------- */
 
+// Açık kutuda her ilerleme güncellemesinde tüm satırları yeniden kurmak,
+// fareyle basılı düğmeyi araya girip tıklamayı yutardı. Satır kümesi ve
+// eylem durumları aynıysa yalnızca metin ve çubuk güncellenir.
+let indirmeImza = '';
+const indirmeSatirlari = new Map();   // id -> { alt, cubukIc }
+
+function indirmeImzasi(v) {
+  return v.ogeler.map((o) => [o.id, o.durum, o.duraklatildi, o.acilabilir, o.surdurulebilir,
+    o.duraklatilabilir, o.iptalEdilebilir, o.silinebilir, o.yuzde === null ? 0 : 1, o.belirsiz ? 1 : 0].join(':')).join('|');
+}
+
+function indirmeYamala(v) {
+  if (!kutu.querySelector('.menu-satir') || indirmeImzasi(v) !== indirmeImza) return false;
+  for (const o of v.ogeler) {
+    const r = indirmeSatirlari.get(o.id);
+    if (!r) return false;
+    r.alt.textContent = o.alt;
+    if (r.cubukIc && o.yuzde !== null && o.yuzde !== undefined) r.cubukIc.style.width = o.yuzde + '%';
+  }
+  return true;
+}
+
+function eylemDugmesi(simge, baslik, fn) {
+  const d = document.createElement('button');
+  d.className = 'ikon kucuk';
+  d.innerHTML = simge;
+  d.title = baslik || '';
+  d.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
+  return d;
+}
+
 function indirmeleriCiz(v) {
+  indirmeSatirlari.clear();
+  indirmeImza = indirmeImzasi(v);
+
   const baslik = document.createElement('div');
   baslik.className = 'menu-baslik';
   baslik.textContent = v.baslik;
@@ -70,27 +111,25 @@ function indirmeleriCiz(v) {
     satir.appendChild(metin);
 
     // İlerleme çizgisi yalnızca sürmekte olan ve boyutu bilinen indirmelerde.
-    if (o.yuzde !== null && o.yuzde !== undefined) {
+    let cubukIc = null;
+    if ((o.yuzde !== null && o.yuzde !== undefined) || o.belirsiz) {
       const cubuk = document.createElement('div');
-      cubuk.className = 'ilerleme';
-      const ic = document.createElement('div');
-      ic.style.width = o.yuzde + '%';
-      cubuk.appendChild(ic);
+      cubuk.className = 'ilerleme' + (o.duraklatildi ? ' duraklatildi' : '') + (o.belirsiz ? ' belirsiz' : '');
+      cubukIc = document.createElement('div');
+      if (!o.belirsiz) cubukIc.style.width = o.yuzde + '%';
+      cubuk.appendChild(cubukIc);
       metin.appendChild(cubuk);
     }
+    indirmeSatirlari.set(o.id, { alt, cubukIc });
 
+    if (o.duraklatilabilir) satir.appendChild(eylemDugmesi(SIMGE.duraklat, v.duraklatMetni, () => window.katman.indirmeEylem(o.id, 'duraklat')));
+    if (o.surdurulebilir) satir.appendChild(eylemDugmesi(SIMGE.surdur, v.surdurMetni, () => window.katman.indirmeEylem(o.id, 'surdur')));
+    if (o.iptalEdilebilir) satir.appendChild(eylemDugmesi(SIMGE.kapat, v.iptalMetni, () => window.katman.indirmeEylem(o.id, 'iptal')));
     if (o.acilabilir) {
       satir.addEventListener('click', () => window.katman.indirmeAc(o.id));
-      const klasor = document.createElement('button');
-      klasor.className = 'ikon kucuk';
-      klasor.innerHTML = SIMGE.klasor;
-      klasor.title = v.klasorMetni || '';
-      klasor.addEventListener('click', (e) => {
-        e.stopPropagation();
-        window.katman.indirmeKlasor(o.id);
-      });
-      satir.appendChild(klasor);
+      satir.appendChild(eylemDugmesi(SIMGE.klasor, v.klasorMetni, () => window.katman.indirmeKlasor(o.id)));
     }
+    if (o.silinebilir) satir.appendChild(eylemDugmesi(SIMGE.sil, v.silMetni, () => window.katman.indirmeEylem(o.id, 'sil')));
 
     kutu.appendChild(satir);
   }
@@ -149,6 +188,193 @@ function izinCiz(v) {
 
   // Odak reddetmede başlasın: kazara Enter izin vermesin.
   requestAnimationFrame(() => reddet.focus());
+}
+
+/* ---------------- onay penceresi ---------------- */
+
+/*
+ * Sayfanın ortasında, tarayıcının kendi temasıyla çizilen onay kutusu. Eklenti
+ * kurulumu/kaldırma gibi işletim sistemi kutusuna benzemesini istemediğimiz
+ * kararlar için. Bölümler (sürüm, izinler, siteler) etiket + yuvarlak rozetler
+ * olarak çiziliyor. Kapatma/Escape/dışarı tıklama "vazgeç" sayılır.
+ */
+function onayCiz(v) {
+  ortu.classList.add('karart');
+  kutu.classList.add('merkez');
+
+  const baslik = document.createElement('div');
+  baslik.className = 'onay-baslik';
+  const ikon = document.createElement('span');
+  ikon.className = 'onay-ikon' + (v.tehlikeli ? ' tehlike' : '');
+  ikon.innerHTML = v.simge === 'uyari' ? SIMGE.uyari : SIMGE.soru;
+  const metin = document.createElement('span');
+  metin.className = 'onay-baslik-metin';
+  metin.textContent = v.baslik;
+  baslik.append(ikon, metin);
+  kutu.appendChild(baslik);
+
+  if (v.aciklama) {
+    const a = document.createElement('div');
+    a.className = 'onay-aciklama';
+    a.textContent = v.aciklama;
+    kutu.appendChild(a);
+  }
+
+  for (const b of (v.bolumler || [])) {
+    if (!b.ogeler || !b.ogeler.length) continue;
+    const bolum = document.createElement('div');
+    bolum.className = 'onay-bolum';
+    const etiket = document.createElement('div');
+    etiket.className = 'onay-etiket';
+    etiket.textContent = b.etiket;
+    const rozetler = document.createElement('div');
+    rozetler.className = 'onay-rozetler';
+    for (const o of b.ogeler) {
+      const r = document.createElement('span');
+      r.className = 'onay-rozet' + (b.mono ? ' mono' : '');
+      r.textContent = o;
+      rozetler.appendChild(r);
+    }
+    bolum.append(etiket, rozetler);
+    kutu.appendChild(bolum);
+  }
+
+  const dugmeler = document.createElement('div');
+  dugmeler.className = 'izin-dugmeler onay-dugmeler';
+  let vazgec = null;
+  if (v.vazgecMetni) {
+    vazgec = document.createElement('button');
+    vazgec.textContent = v.vazgecMetni;
+    vazgec.addEventListener('click', () => window.katman.onayKarar(false));
+    dugmeler.appendChild(vazgec);
+  }
+  const tamam = document.createElement('button');
+  tamam.className = 'birincil' + (v.tehlikeli ? ' tehlike' : '');
+  tamam.textContent = v.tamamMetni;
+  tamam.addEventListener('click', () => window.katman.onayKarar(true));
+  dugmeler.appendChild(tamam);
+  kutu.appendChild(dugmeler);
+
+  // Yıkıcı eylemde odak vazgeçte başlasın: kazara Enter silmesin.
+  requestAnimationFrame(() => (v.tehlikeli && vazgec ? vazgec : tamam).focus());
+}
+
+/* ---------------- yenilikler (sürüm notları) ---------------- */
+
+// Satır içi Markdown: `kod`, **kalın**, [metin](adres). Hepsi DOM düğümü olarak
+// kurulur (innerHTML yok); bağlantılar tıklanabilir yapılmaz, yalnızca metin.
+function mdSatirIci(ust, metin) {
+  const re = /(`[^`]+`)|(\*\*[^*]+\*\*)|(\[[^\]]+\]\([^)]*\))/g;
+  let son = 0;
+  let m;
+  while ((m = re.exec(metin))) {
+    if (m.index > son) ust.append(metin.slice(son, m.index));
+    if (m[1]) {
+      const k = document.createElement('code');
+      k.textContent = m[1].slice(1, -1);
+      ust.appendChild(k);
+    } else if (m[2]) {
+      const b = document.createElement('strong');
+      mdSatirIci(b, m[2].slice(2, -2));
+      ust.appendChild(b);
+    } else {
+      ust.append(/^\[([^\]]+)\]/.exec(m[3])[1]);
+    }
+    son = m.index + m[0].length;
+  }
+  if (son < metin.length) ust.append(metin.slice(son));
+}
+
+function mdCiz(kap, govde, bolumAdlari) {
+  kap.replaceChildren();
+  for (const satir of govde.split('\n')) {
+    if (!satir.trim()) continue;
+    const baslik = /^#{2,6}\s+(.*)$/.exec(satir);
+    if (baslik) {
+      const h = document.createElement('div');
+      h.className = 'yn-bolum';
+      const ad = baslik[1].trim();
+      h.textContent = Object.hasOwn(bolumAdlari, ad) ? bolumAdlari[ad] : ad;
+      kap.appendChild(h);
+      continue;
+    }
+    const madde = /^(\s*)(?:[-*+]|\d+\.)\s+(.*)$/.exec(satir);
+    const d = document.createElement('div');
+    if (madde) {
+      d.className = 'yn-oge';
+      d.style.setProperty('--yn-girinti', Math.min(4, Math.floor(madde[1].length / 2)));
+      mdSatirIci(d, madde[2]);
+    } else {
+      d.className = 'yn-par';
+      mdSatirIci(d, satir.trim());
+    }
+    kap.appendChild(d);
+  }
+}
+
+function yenilikCiz(v) {
+  ortu.classList.add('karart');
+  kutu.classList.add('merkez', 'yenilik');
+
+  const bas = document.createElement('div');
+  bas.className = 'yn-bas';
+  const metin = document.createElement('div');
+  metin.className = 'yn-baslik-kap';
+  const b = document.createElement('div');
+  b.className = 'yn-baslik';
+  b.textContent = v.baslik;
+  const alt = document.createElement('div');
+  alt.className = 'yn-surum';
+  alt.textContent = 'v' + v.surum + (v.tarih ? ' · ' + v.tarih : '');
+  metin.append(b, alt);
+
+  const dilKap = document.createElement('label');
+  dilKap.className = 'yn-dil';
+  const dilEtiket = document.createElement('span');
+  dilEtiket.textContent = v.m.dil;
+  const sec = document.createElement('select');
+  for (const d of v.diller) {
+    const o = document.createElement('option');
+    o.value = d.kod;
+    o.textContent = d.ad;
+    if (d.kod === v.secili) o.selected = true;
+    sec.appendChild(o);
+  }
+  dilKap.append(dilEtiket, sec);
+  bas.append(metin, dilKap);
+
+  const durum = document.createElement('div');
+  durum.className = 'yn-durum';
+  const icerik = document.createElement('div');
+  icerik.className = 'yn-govde';
+
+  const dugmeler = document.createElement('div');
+  dugmeler.className = 'izin-dugmeler onay-dugmeler';
+  const kapat = document.createElement('button');
+  kapat.className = 'birincil';
+  kapat.textContent = v.m.kapat;
+  kapat.addEventListener('click', () => window.katman.kapat());
+  dugmeler.appendChild(kapat);
+
+  kutu.append(bas, durum, icerik, dugmeler);
+
+  let istek = 0;
+  async function goster(kod) {
+    const bu = ++istek;
+    icerik.dir = kod === 'ar' ? 'rtl' : 'ltr';
+    durum.textContent = '';
+    if (kod === 'en') { mdCiz(icerik, v.govde, v.m.bolumler); return; }
+    durum.textContent = v.m.ceviriyor;
+    let sonuc = null;
+    try { sonuc = await window.katman.yenilikCevir(kod); } catch { sonuc = null; }
+    if (bu !== istek) return;              // arada başka dil seçildi
+    if (sonuc && sonuc.govde) { mdCiz(icerik, sonuc.govde, v.m.bolumler); durum.textContent = ''; }
+    else { icerik.dir = 'ltr'; mdCiz(icerik, v.govde, v.m.bolumler); durum.textContent = v.m.ceviriHata; }
+  }
+  sec.addEventListener('change', () => goster(sec.value));
+  mdCiz(icerik, v.govde, v.m.bolumler);
+  goster(sec.value);
+  requestAnimationFrame(() => kapat.focus());
 }
 
 /* ---------------- VPN ---------------- */
@@ -312,11 +538,357 @@ function vpnCiz(v) {
   kutu.appendChild(ekran);
 }
 
+/* ---------------- yer imleri menüsü ---------------- */
+
+/*
+ * Yer imi çubuğundaki "Tüm yer imleri" / "»" menüleri. Sitedeyken sayfa görünümü
+ * arayüzün üstünde olduğu için menü burada, katmanda çiziliyor. Klasörler sağa
+ * açılan alt menüler; uzun listeler kaydırılır.
+ * ogeler: { tur: 'yerimi', url, baslik, favicon } | { tur: 'klasor', ad, yol, alt }
+ *       | { tur: 'eylem', ad } | { tur: 'ayrac' }
+ */
+let ymMenuler = [];
+
+function ymKapat(seviye) {
+  while (ymMenuler.length > seviye) ymMenuler.pop().remove();
+}
+
+function ymSimge(o) {
+  let host = '';
+  try { host = new URL(o.url).hostname; } catch { /* geçersiz */ }
+  const rozet = () => {
+    const r = document.createElement('span');
+    r.className = 'ym-rozet';
+    r.textContent = (host || o.baslik || '?').replace(/^www\./, '').charAt(0).toUpperCase();
+    return r;
+  };
+  if (!o.favicon) return rozet();
+  const i = document.createElement('img');
+  i.className = 'ym-simge';
+  i.alt = '';
+  i.src = o.favicon;
+  i.addEventListener('error', () => i.replaceWith(rozet()));
+  return i;
+}
+
+function ymKur(ogeler, seviye, konum) {
+  ymKapat(seviye);
+  const menu = document.createElement('div');
+  menu.className = 'ym-menu';
+  for (const o of ogeler) {
+    if (o.tur === 'ayrac') {
+      const ay = document.createElement('div');
+      ay.className = 'ym-ayrac';
+      menu.appendChild(ay);
+      continue;
+    }
+    const oge = document.createElement('div');
+    oge.className = 'ym-oge';
+    const ad = document.createElement('span');
+    ad.className = 'ym-baslik';
+    if (o.tur === 'yerimi') {
+      oge.title = o.baslik + '\n' + o.url;
+      ad.textContent = o.baslik || o.url;
+      oge.append(ymSimge(o), ad);
+      oge.addEventListener('mouseenter', () => ymKapat(seviye + 1));
+      oge.addEventListener('click', () => window.katman.yerimiGit(o.url, false));
+      oge.addEventListener('auxclick', (e) => { if (e.button === 1) window.katman.yerimiGit(o.url, true); });
+    } else if (o.tur === 'klasor') {
+      const simge = document.createElement('span');
+      simge.className = 'ym-klasor-simge';
+      simge.innerHTML = SIMGE.klasor;
+      ad.textContent = o.ad;
+      oge.title = o.yol;
+      const ok = document.createElement('span');
+      ok.className = 'ym-ok';
+      ok.innerHTML = '<svg viewBox="0 0 16 16"><path d="M6 3l5 5-5 5"/></svg>';
+      oge.append(simge, ad, ok);
+      const ac = () => {
+        for (const m of menu.querySelectorAll('.ym-oge.acik')) m.classList.remove('acik');
+        oge.classList.add('acik');
+        const r = oge.getBoundingClientRect();
+        ymKur(o.alt, seviye + 1, (m) => {
+          let sol = r.right - 2;
+          if (sol + m.offsetWidth > window.innerWidth - 4) sol = Math.max(4, r.left - m.offsetWidth + 2);
+          return { sol, ust: r.top - 5 };
+        });
+      };
+      oge.addEventListener('mouseenter', ac);
+      oge.addEventListener('click', ac);
+    } else {
+      const simge = document.createElement('span');
+      simge.className = 'ym-klasor-simge';
+      simge.innerHTML = SIMGE.klasor;
+      ad.textContent = o.ad;
+      oge.append(simge, ad);
+      oge.addEventListener('mouseenter', () => ymKapat(seviye + 1));
+      oge.addEventListener('click', () => window.katman.yerimiTumunuAc());
+    }
+    menu.appendChild(oge);
+  }
+  menu.style.visibility = 'hidden';
+  document.body.appendChild(menu);
+  const k = konum(menu);
+  const sol = Math.max(4, Math.min(window.innerWidth - menu.offsetWidth - 4, k.sol));
+  const ust = Math.max(4, k.ust);
+  menu.style.left = sol + 'px';
+  menu.style.top = ust + 'px';
+  menu.style.maxHeight = Math.max(120, window.innerHeight - ust - 8) + 'px';
+  menu.style.visibility = '';
+  ymMenuler.push(menu);
+}
+
+function yerimiCiz(v) {
+  kutu.style.display = 'none';
+  ymMenuler = [];
+  ymKur(v.ogeler, 0, (m) => ({
+    sol: v.sagaHizala ? v.sag - m.offsetWidth : v.sol,
+    ust: v.ust
+  }));
+}
+
+/* ---------------- yer imi ekle/düzenle kutusu ---------------- */
+
+// Dışarı tıklayınca kayıt yapıp kapatmak için; null ise düz kapatma.
+let kapatinca = null;
+
+function yerimiPopCiz(v) {
+  const m = v.metin;
+  const d = { ad: v.baslik, url: v.url, klasor: v.klasor, yeni: [] };
+  const kaydet = () => window.katman.yerimiKaydet({
+    url: v.url, yeniUrl: d.url, ad: d.ad.trim() || v.baslik || v.url, klasor: d.klasor
+  });
+  kapatinca = kaydet;
+  const bitir = () => { kapatinca = null; kaydet(); };
+  const yeniKlasorEtiketi = m.yeniKlasor.replace(/^\+\s*/, '').replace(/…$/, '');
+
+  function dugme(sinif, metin, fn) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ypk-dugme ' + sinif;
+    b.textContent = metin;
+    b.addEventListener('click', fn);
+    return b;
+  }
+  function satir(etiket, kontrol) {
+    const r = document.createElement('div');
+    r.className = 'ypk-satir';
+    const e = document.createElement('label');
+    e.className = 'ypk-etiket';
+    e.textContent = etiket;
+    r.append(e, kontrol);
+    return r;
+  }
+  function girdi(deger, alan) {
+    const g = document.createElement('input');
+    g.type = 'text';
+    g.className = 'ypk-girdi';
+    g.value = deger;
+    g.addEventListener('input', () => { d[alan] = g.value; });
+    g.addEventListener('keydown', (e) => { if (e.key === 'Enter') bitir(); });
+    return g;
+  }
+
+  /* ---- küçük görünüm: ad + klasör listesi ---- */
+  function kucuk() {
+    kutu.replaceChildren();
+    kutu.style.setProperty('--kutu-genislik', '440px');
+    const kap = document.createElement('div');
+    kap.className = 'ypk ypk-kucuk';
+
+    const onizleme = document.createElement('div');
+    onizleme.className = 'ypk-onizleme';
+    if (v.favicon) {
+      const i = document.createElement('img');
+      i.alt = '';
+      i.src = v.favicon;
+      i.addEventListener('error', () => { i.replaceWith(yildiz()); });
+      onizleme.appendChild(i);
+    } else {
+      onizleme.appendChild(yildiz());
+    }
+
+    const sag = document.createElement('div');
+    sag.className = 'ypk-sag';
+    const ust = document.createElement('div');
+    ust.className = 'ypk-ust';
+    const bas = document.createElement('div');
+    bas.className = 'ypk-baslik';
+    bas.textContent = m.baslik;
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'ikon kucuk';
+    x.title = m.kapat;
+    x.innerHTML = SIMGE.kapat;
+    x.addEventListener('click', bitir);
+    ust.append(bas, x);
+
+    const adG = girdi(d.ad, 'ad');
+    const sec = document.createElement('select');
+    sec.className = 'ypk-girdi ypk-secim';
+    const yollar = ['', ...v.klasorler];
+    if (d.klasor && !yollar.includes(d.klasor)) yollar.push(d.klasor);
+    for (const k of yollar) {
+      const o = document.createElement('option');
+      o.value = k;
+      o.textContent = k || m.cubuk;
+      if (k === d.klasor) o.selected = true;
+      sec.appendChild(o);
+    }
+    const diger = document.createElement('option');
+    diger.value = '__DIGER__';
+    diger.textContent = m.baskaKlasor;
+    sec.appendChild(diger);
+    sec.addEventListener('change', () => {
+      if (sec.value === '__DIGER__') { agac(); return; }
+      d.klasor = sec.value;
+    });
+
+    const dugmeler = document.createElement('div');
+    dugmeler.className = 'ypk-dugmeler';
+    dugmeler.append(
+      dugme('birincil', m.bitti, bitir),
+      dugme('ikincil', m.kaldir, () => { kapatinca = null; window.katman.yerimiKaldir(v.url); })
+    );
+    sag.append(ust, satir(m.ad, adG), satir(m.klasor, sec), dugmeler);
+    kap.append(onizleme, sag);
+    kutu.appendChild(kap);
+    requestAnimationFrame(() => { adG.focus(); adG.select(); });
+  }
+
+  function yildiz() {
+    const s = document.createElement('span');
+    s.className = 'ypk-yildiz';
+    s.textContent = '★';
+    return s;
+  }
+
+  /* ---- ağaç görünümü: ad + URL + klasör seç ---- */
+  let yeniGirdiAcik = false;
+  const acik = new Set();
+  function atalariAc(yol) {
+    const p = yol.split('/');
+    for (let i = 1; i < p.length; i++) acik.add(p.slice(0, i).join('/'));
+  }
+
+  function agac() {
+    kutu.replaceChildren();
+    kutu.style.setProperty('--kutu-genislik', '460px');
+    atalariAc(d.klasor);
+    const kap = document.createElement('div');
+    kap.className = 'ypk ypk-agac';
+    const bas = document.createElement('div');
+    bas.className = 'ypk-baslik';
+    bas.textContent = m.duzenleBaslik;
+
+    const adG = girdi(d.ad, 'ad');
+    const urlG = girdi(d.url, 'url');
+
+    const kutuAgac = document.createElement('div');
+    kutuAgac.className = 'ypk-agac-kutu';
+    kutuAgac.tabIndex = 0;
+
+    const yollar = new Set([...v.klasorler, ...d.yeni]);
+    const kok = { alt: new Map() };
+    for (const y of yollar) {
+      let n = kok;
+      for (const seg of y.split('/').filter(Boolean)) {
+        if (!n.alt.has(seg)) n.alt.set(seg, { alt: new Map() });
+        n = n.alt.get(seg);
+      }
+    }
+
+    function dugumSatiri(etiket, yol, derinlik, dugum) {
+      const r = document.createElement('div');
+      r.className = 'ypk-dugum' + (d.klasor === yol ? ' secili' : '');
+      r.style.paddingLeft = (8 + derinlik * 18) + 'px';
+      const ok = document.createElement('span');
+      ok.className = 'ypk-ok' + (dugum && dugum.alt.size ? '' : ' bos');
+      if (dugum && dugum.alt.size) {
+        ok.innerHTML = '<svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></svg>';
+        ok.classList.toggle('kapali', !acik.has(yol));
+        ok.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (acik.has(yol)) acik.delete(yol); else acik.add(yol);
+          agac();
+        });
+      }
+      const si = document.createElement('span');
+      si.className = 'ypk-dugum-simge';
+      si.innerHTML = SIMGE.klasor;
+      const ad = document.createElement('span');
+      ad.className = 'ypk-dugum-ad';
+      ad.textContent = etiket;
+      r.append(ok, si, ad);
+      r.addEventListener('click', () => { d.klasor = yol; yeniGirdiAcik = false; agac(); });
+      return r;
+    }
+
+    function yeniGirdiSatiri(ustYol, derinlik) {
+      const r = document.createElement('div');
+      r.className = 'ypk-dugum';
+      r.style.paddingLeft = (8 + derinlik * 18 + 18) + 'px';
+      const g = document.createElement('input');
+      g.type = 'text';
+      g.className = 'ypk-girdi ypk-yeni-girdi';
+      g.placeholder = m.klasorAdi;
+      g.addEventListener('keydown', (e) => {
+        e.stopPropagation();
+        if (e.key === 'Enter') {
+          const ad = g.value.trim().split('/').join('-');
+          if (ad) {
+            const yol = ustYol ? ustYol + '/' + ad : ad;
+            d.yeni.push(yol);
+            d.klasor = yol;
+            acik.add(ustYol);
+          }
+          yeniGirdiAcik = false;
+          agac();
+        } else if (e.key === 'Escape') {
+          yeniGirdiAcik = false;
+          agac();
+        }
+      });
+      r.appendChild(g);
+      requestAnimationFrame(() => g.focus());
+      return r;
+    }
+
+    function ciz(n, onek, derinlik) {
+      for (const [ad, c] of n.alt) {
+        const yol = onek ? onek + '/' + ad : ad;
+        kutuAgac.appendChild(dugumSatiri(ad, yol, derinlik, c));
+        if (acik.has(yol)) ciz(c, yol, derinlik + 1);
+        if (yeniGirdiAcik && d.klasor === yol) kutuAgac.appendChild(yeniGirdiSatiri(yol, derinlik + 1));
+      }
+    }
+    kutuAgac.appendChild(dugumSatiri(m.cubuk, '', 0, null));
+    if (yeniGirdiAcik && d.klasor === '') kutuAgac.appendChild(yeniGirdiSatiri('', 0));
+    ciz(kok, '', 0);
+
+    const dugmeler = document.createElement('div');
+    dugmeler.className = 'ypk-dugmeler ypk-alt';
+    const sol = dugme('anahat', yeniKlasorEtiketi, () => { yeniGirdiAcik = true; agac(); });
+    const bosluk = document.createElement('span');
+    bosluk.style.flex = '1';
+    dugmeler.append(sol, bosluk,
+      dugme('birincil', m.kaydet, bitir),
+      dugme('ikincil', m.iptal, () => { kapatinca = null; window.katman.kapat(); })
+    );
+
+    kap.append(bas, satir(m.ad, adG), satir(m.url, urlG), kutuAgac, dugmeler);
+    kutu.appendChild(kap);
+  }
+
+  kucuk();
+}
+
 /* ---------------- yönlendirme ---------------- */
 
 window.katman.dinle((v) => {
+  if (v.yenile && v.tur === 'indirmeler' && indirmeYamala(v)) return;
   bos();
-  kutu.classList.add(v.yon === 'sol' ? 'sol' : 'sag');
+  if (v.tur !== 'onay' && v.tur !== 'yenilikler') kutu.classList.add(v.yon === 'sol' ? 'sol' : 'sag');
   kutu.style.setProperty('--kutu-ust', v.ust + 'px');
   kutu.style.setProperty('--kutu-kenar', v.kenar + 'px');
   if (v.genislik) kutu.style.setProperty('--kutu-genislik', v.genislik + 'px');
@@ -324,11 +896,17 @@ window.katman.dinle((v) => {
   if (v.tur === 'indirmeler') indirmeleriCiz(v);
   else if (v.tur === 'izin') izinCiz(v);
   else if (v.tur === 'vpn') vpnCiz(v);
+  else if (v.tur === 'onay') onayCiz(v);
+  else if (v.tur === 'yenilikler') yenilikCiz(v);
+  else if (v.tur === 'yerimi') yerimiCiz(v);
+  else if (v.tur === 'yerimipop') yerimiPopCiz(v);
 });
 
 // Dışarı tıklama ve Escape kutuyu kapatır. İzin kutusunda bu "reddet"
 // anlamına gelir; kararı ana süreç veriyor, biz yalnızca kapanışı bildiriyoruz.
-ortu.addEventListener('mousedown', () => window.katman.kapat());
+ortu.addEventListener('mousedown', () => {
+  if (kapatinca) { const k = kapatinca; kapatinca = null; k(); } else window.katman.kapat();
+});
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') window.katman.kapat();
 });

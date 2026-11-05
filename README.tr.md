@@ -1,6 +1,6 @@
-# Girginos Browser
+# CVS Browser
 
-Gizlilik odaklı masaüstü web tarayıcısı. 11 dilde arayüz.
+Gizlilik odaklı masaüstü web tarayıcısı. 12 dilde arayüz.
 
 Sayfa oluşturma motoru **Chromium** (Electron üzerinden); tarayıcının kendisi —
 sekme yönetimi, adres çubuğu, filtre listesi altyapısı, geçmiş, yer imleri,
@@ -41,11 +41,11 @@ IPC/DOM sözleşmesini ve 11 dil dosyasının anahtar bütünlüğünü doğrula
 | Sayfada bul | Ctrl+F, ileri/geri, eşleşme sayacı |
 | Site simgeleri | Bir kez indirilip yerel önbellekten sunulur, uzak istek yok |
 | Güncelleme | Ed25519 ile imzalı yayın manifesti, otomatik denetim, kanal seçimi |
-| Diller | Türkçe, English, Deutsch, Français, Español, Italiano, Português, Русский, العربية (RTL), 简体中文, 日本語 |
+| Diller | Türkçe, Azərbaycanca, English, Deutsch, Français, Español, Italiano, Português, Русский, العربية (RTL), 简体中文, 日本語 |
 
 ## Kısayollar
 
-`Ctrl+T` yeni sekme · `Ctrl+W` sekmeyi kapat · `Ctrl+Tab` sekme geç · `Ctrl+1..9` sekmeye git
+`Ctrl+T` yeni sekme · `Ctrl+Shift+N` yeni gizli sekme · `Ctrl+N` yeni pencere · `Ctrl+W` sekmeyi kapat · `Ctrl+Tab` sekme geç · `Ctrl+1..9` sekmeye git
 `Ctrl+L` adres çubuğu · `Ctrl+F` sayfada bul · `Ctrl+R` yenile · `Alt+←/→` geri/ileri
 `Ctrl+D` yer imi · `Ctrl+H` geçmiş · `Ctrl+J` indirmeler · `Ctrl+Shift+B` yer imleri çubuğu
 `Ctrl+,` ayarlar · `Ctrl+ +/-/0` yakınlaştırma · `F11` tam ekran · `Ctrl+Shift+I` geliştirici araçları
@@ -84,7 +84,7 @@ Varsayılan abonelikler **EasyList** (reklam) ve **EasyPrivacy** (izleyici).
 Listeler ilk açılıştan ~15 sn sonra, ardından 6 saatte bir kontrol edilir ve
 listenin kendi `! Expires` süresine (genellikle 4 gün) göre yenilenir. İndirme
 ayrı ve kalıcı olmayan bir oturumdan yapılır: çerez tutmaz. Ayrıştırılmış hâl
-`%APPDATA%/Girginos Browser/listeler/*.json` içinde önbelleklenir, ağ yoksa son iyi kopya
+`%APPDATA%/CVS Browser/listeler/*.json` içinde önbelleklenir, ağ yoksa son iyi kopya
 kullanılmaya devam eder. Ayarlar'dan kendi listenizi (Adblock Plus, hosts ya da
 düz alan adı biçiminde bir https adresi) ekleyebilirsiniz.
 
@@ -126,7 +126,7 @@ listelerin yaklaşık %85'i bu süzgeçten geçiyor.
 - Sayfa görünümü, arayüzün üstünde yerel bir katman olarak çizilir. Bu yüzden
   açılır liste, indirilenler menüsü ve bul çubuğu sayfanın üzerine binmez;
   arayüz akışında yer alır ve açıldıklarında sayfa aşağı kayar.
-- Veriler `%APPDATA%/Girginos Browser/pusula-veri.json` altında, geçici dosya + yeniden
+- Veriler `%APPDATA%/CVS Browser/pusula-veri.json` altında, geçici dosya + yeniden
   adlandırma ile atomik olarak tutulur.
 
 ## Yeni sekme tanıtım alanı
@@ -207,7 +207,7 @@ Bir tarayıcının saldırı yüzeyi ikiye ayrılır ve ikisi çok farklı davra
 **Motor (Chromium/V8/Skia).** 2026'da Chrome'da vahşi doğada sömürülen altı
 zero-day dahil onlarca bellek güvenliği açığı kapatıldı. Bunları biz yazmıyoruz
 ve düzeltemiyoruz — **tek savunma motoru güncel tutmak.** Bu yüzden şu kural
-geçerli: *Girginos Browser asla ömrünü tamamlamış bir Electron sürümüyle yayınlanmaz.*
+geçerli: *CVS Browser asla ömrünü tamamlamış bir Electron sürümüyle yayınlanmaz.*
 Electron yalnızca son üç ana sürümü destekler; `package.json` içindeki sürüm
 sabiti her yayın öncesi kontrol edilmelidir.
 

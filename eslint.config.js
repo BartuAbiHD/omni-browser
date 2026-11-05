@@ -90,7 +90,7 @@ module.exports = [
   },
   {
     // Önyükleme betikleri: contextBridge burada, iki dünyanın arası.
-    files: ['preload.js', 'ui/*-onyukleme.js'],
+    files: ['preload.js', 'ui/*-onyukleme.js', 'src/*-onyukleme.js'],
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: 'commonjs',
