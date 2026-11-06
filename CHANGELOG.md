@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2026.11.8] - 2026-11-06
+
+### Changed
+- **Reduced Chrome version in the User-Agent**: the User-Agent now reports `Chrome/152.0.0.0` instead of the full `Chrome/152.0.7977.76`, the same reduced format real Chrome sends. The major version is unchanged, so it still matches `Sec-CH-UA` and `navigator.userAgentData`. Nothing else in the string is touched (`Electron/x` and `CVSBrowser/x` stay).
+- Contract test (`test/sozlesme.js`) now allows exactly this one `app.userAgentFallback` assignment; any other manual User-Agent change is still rejected.
+
+---
+
 ## [2026.11.7] - 2026-11-06
 
 ### Added

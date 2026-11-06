@@ -1,7 +1,7 @@
 {
   "name": "cvs-browser",
   "productName": "CVS Browser",
-  "version": "2026.11.7",
+  "version": "2026.11.8",
   "description": "CVS Browser — gizlilik odaklı web tarayıcısı",
   "main": "main.js",
   "author": "BartubiHD",

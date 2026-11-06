@@ -50,7 +50,7 @@ const { vekilKurallari, adresGecerliMi, atlamaGecerliMi } = require('./src/vekil
 const { vpnVekilKurali, lokasyonGecerliMi: vpnLokasyonGecerliMi, katalog: vpnKatalog, vpnKayitUrl } = require('./src/vpn');
 const { vekilliFetch } = require('./src/vekil-istek');
 const yenilikler = require('./src/yenilikler');
-const { ipucuBasliklari } = require('./src/istemci-ipuclari');
+const { ipucuBasliklari, uaKucukSurumuGizle } = require('./src/istemci-ipuclari');
 const { flowmusicMi, flowmusicKodu } = require('./src/flowmusic');
 const dpi = require('./src/dpi');
 const varsayilanWindows = require('./src/varsayilan-windows');
@@ -5685,6 +5685,10 @@ let oneriDurumSira = 0;
 /* ---------------------------------------------------------------- */
 /* Başlangıç                                                         */
 /* ---------------------------------------------------------------- */
+
+// Yalnizca Chrome surumunun kucuk kismi sifirlaniyor (UA reduction); ana surum
+// Client Hints ile ayni kaliyor. Gerekce oturumKur()'un ustundeki yorumda.
+app.userAgentFallback = uaKucukSurumuGizle(app.userAgentFallback);
 
 const cokluPencereMi = process.argv.includes('--yeni-pencere');
 if (!cokluPencereMi && !app.requestSingleInstanceLock()) {

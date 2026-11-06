@@ -207,7 +207,8 @@ const uaAyari = [];
 for (const t of ['main.js']) {
   const kod = oku(t);
   if (/\.setUserAgent\s*\(/.test(kod)) uaAyari.push(t + ' -> setUserAgent(');
-  if (/userAgentFallback\s*=/.test(kod)) uaAyari.push(t + ' -> app.userAgentFallback =');
+  // Tek izin verilen atama: kucuk surumu sifirlayan uaKucukSurumuGizle()
+  if (/userAgentFallback\s*=(?!\s*uaKucukSurumuGizle\()/.test(kod)) uaAyari.push(t + ' -> app.userAgentFallback =');
 }
 
 /*

@@ -52,4 +52,14 @@ function ipucuBasliklari(markalar, mobil, platform) {
   return basliklar;
 }
 
-module.exports = { ipucuBasliklari };
+/**
+ * UA'daki Chrome sürümünün küçük kısmını sıfırlar: "Chrome/152.0.7977.76" ->
+ * "Chrome/152.0.0.0". Gerçek Chrome da UA küçültme (UA reduction) ile aynı
+ * biçimi gönderir. Ana sürüm değişmediği için Sec-CH-UA / userAgentData ile
+ * tutarlı kalır; başka hiçbir şey değiştirilmez.
+ */
+function uaKucukSurumuGizle(ua) {
+  return String(ua).replace(/\bChrome\/(\d+)\.\d+\.\d+\.\d+/, 'Chrome/$1.0.0.0');
+}
+
+module.exports = { ipucuBasliklari, uaKucukSurumuGizle };
