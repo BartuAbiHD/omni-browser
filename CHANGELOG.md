@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2026.11.9] - 2026-11-06
+
+### Added
+- **Discord Rich Presence**: when the Discord desktop app is running and the active tab is on a supported site, the browser shows what you are doing (watching, listening) as your Discord activity. Supported sites: Anivesta, Video Vitrini, YouTube, YouTube Music, Apple Music, Spotify, Netflix, Twitch and Kick. Presence logic is ported from the PreMiD activities and uses their application IDs and assets.
+  - Talks to Discord over its local IPC pipe/socket (`src/discord-rpc.js`), connecting to every reachable Discord pipe; reconnects automatically.
+  - Playing state, elapsed/remaining time and "Duraklatıldı" (paused) are shown; players inside same-site iframes (Anivesta) are read from the main process.
+  - Netflix titles are fetched from netflix.com's own metadata endpoint; Twitch and Kick show live streams, VODs and clips.
+  - Two new privacy settings: **Discord status** and **Discord buttons**, both on by default.
+- Tests: `test/discord.js` (added to `npm test`) covers the IPC framing/handshake, site matching (including look-alike hosts) and every site adapter.
+
+### Security
+- Nothing is published from private tabs or private windows. All page text is treated as untrusted (trimmed, control characters stripped), image URLs must be HTTPS, and button URLs must be on the site's own host. Search queries on YouTube are never shown.
+
+---
+
 ## [2026.11.8] - 2026-11-06
 
 ### Changed

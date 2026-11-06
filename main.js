@@ -114,6 +114,7 @@ function guvenliDnsUygula() {
   }
 }
 const bayraklar = require('./src/bayraklar');
+const { DiscordYonetici } = require('./src/discord-yonetici');
 function bayraklariUygula() {
   let ham = {};
   try {
@@ -309,6 +310,8 @@ const IC_SAYFALAR = new Set([
 ]);
 
 const icSayfaMi = icSayfaDenetleyici(IC_SAYFALAR);
+
+let discordSunumu = null;
 
 function aktifSekme() {
   return aktifId != null ? sekmeler.get(aktifId) : null;
@@ -4353,6 +4356,8 @@ const AYAR_DOGRULAMA = {
   dpiSozlesmeKabul: (v) => typeof v === 'boolean',
   dpiStrateji: (v) => v === 'split-1' || v === 'split-2' || v === 'split-sni' || v === 'fake-split',
   gecmisiKaydet: (v) => typeof v === 'boolean',
+  discordSunum: (v) => typeof v === 'boolean',
+  discordButonlar: (v) => typeof v === 'boolean',
   yerImleriCubugu: (v) => typeof v === 'boolean',
   varsayilanOneriGizle: (v) => typeof v === 'boolean',
   filtreListeleriAcik: (v) => typeof v === 'boolean',
@@ -5749,6 +5754,14 @@ if (!cokluPencereMi && !app.requestSingleInstanceLock()) {
     ipcKur();
     menuKur();
     pencereOlustur();
+    discordSunumu = new DiscordYonetici({
+      ayarAl: () => ({ acik: !GIZLI_PENCERE && !!store.ayarlar.discordSunum, butonlar: !!store.ayarlar.discordButonlar }),
+      sekmeAl: () => {
+        const t = aktifSekme();
+        return t && t.view ? { url: t.url || '', gizli: !!t.gizli, wc: t.view.webContents } : null;
+      }
+    });
+    discordSunumu.baslat();
     // Windows'ta Varsayılan uygulamalar listesinde görünmek için (arka planda, bir kez).
     if (process.platform === 'win32') tarayiciKaydiYaz().catch((e) => console.error('Tarayıcı kaydı yazılamadı:', e.message));
 
@@ -5818,6 +5831,7 @@ if (!cokluPencereMi && !app.requestSingleInstanceLock()) {
   });
 
   app.on('will-quit', () => {
+    if (discordSunumu) discordSunumu.durdur();
     dpi.durdur();
     if (listeler) listeler.dur();
     if (guncelleme) guncelleme.dur();

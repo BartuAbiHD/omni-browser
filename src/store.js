@@ -74,6 +74,9 @@ const DEFAULTS = {
     dpiStrateji: 'split-1', // 'split-1' | 'split-2' | 'split-sni' | 'fake-split'
     dpiSozlesmeKabul: false, // DPI kullanım sözleşmesi kabul edilmeden DPI açılamaz
     gecmisiKaydet: true,
+    // Masaüstü Discord'a yerel IPC ile 'izliyor' durumu (yalnız desteklenen siteler, gizli sekme asla).
+    discordSunum: true,
+    discordButonlar: true,
     anasayfa: '',
     baslangicSekmeleri: [],
     yerImleriCubugu: true,

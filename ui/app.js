@@ -3948,6 +3948,10 @@ function ayarlarPaneli() {
     anahtar(!!a.kapanistaCerezSil, (v) => window.pusula.ayarDegistir('kapanistaCerezSil', v))));
   g.appendChild(ayarSatiri(cev('ayar.gecmisiKaydet'), cev('ayar.gecmisiKaydetAciklama'),
     anahtar(a.gecmisiKaydet, (v) => window.pusula.ayarDegistir('gecmisiKaydet', v))));
+  g.appendChild(ayarSatiri(cev('ayar.discordSunum'), cev('ayar.discordSunumAciklama'),
+    anahtar(a.discordSunum !== false, (v) => window.pusula.ayarDegistir('discordSunum', v))));
+  g.appendChild(ayarSatiri(cev('ayar.discordButonlar'), cev('ayar.discordButonlarAciklama'),
+    anahtar(a.discordButonlar !== false, (v) => window.pusula.ayarDegistir('discordButonlar', v))));
 
   const temizle = document.createElement('button');
   temizle.className = 'dugme';
