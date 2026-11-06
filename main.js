@@ -3691,6 +3691,8 @@ function eklentiPopupKapat() {
 }
 
 // Açılır pencere içeriğinin boyutu: Chrome gibi belgenin içerik boyutu, en çok 800x600.
+// Bu işlev eklenti sayfasında (sayfa dünyasında) çalıştırılır; document orada vardır.
+/* global document */
 function eklentiOlcumKodu() {
   const d = document.documentElement;
   const b = document.body;
@@ -5489,7 +5491,7 @@ function ipcKur() {
   });
 
   on('adres:menu', (_e, p = {}) => {
-    const { x, y, bosMu = false, seciliVarMi = false } = (p || {});
+    const { x, y, seciliVarMi = false } = (p || {});
     if (win && !win.isDestroyed()) {
       win.webContents.focus();
     }

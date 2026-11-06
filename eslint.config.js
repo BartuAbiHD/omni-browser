@@ -52,7 +52,7 @@ const ORTAK = {
 
 module.exports = [
   {
-    ignores: ['dagitim/**', 'node_modules/**'],
+    ignores: ['dagitim/**', 'node_modules/**', 'mobil/**', 'undefined/**'],
   },
   {
     // Ana süreç, modüller, testler, betikler: Node.

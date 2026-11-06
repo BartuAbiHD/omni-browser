@@ -1553,8 +1553,6 @@ async function bayraklarPaneli(sorgu = '') {
   if (acikPanel !== 'bayraklar') return;
   const durumlar = {};
   for (const b of liste) if (b.durum !== 'varsayilan') durumlar[b.id] = b.durum;
-  let degisti = false;
-
   const ara = document.createElement('input');
   ara.type = 'search';
   ara.placeholder = cev('bayrak.ara');
@@ -1588,7 +1586,6 @@ async function bayraklarPaneli(sorgu = '') {
 
   async function kaydet() {
     await window.pusula.ayarDegistir('bayraklar', durumlar);
-    degisti = true;
     yenidenBar.style.display = '';
   }
 
