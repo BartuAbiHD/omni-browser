@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Playing state, elapsed/remaining time and "Duraklatıldı" (paused) are shown; players inside same-site iframes (Anivesta) are read from the main process.
   - Netflix titles are fetched from netflix.com's own metadata endpoint; Twitch and Kick show live streams, VODs and clips.
   - Two new privacy settings: **Discord status** and **Discord buttons**, both on by default.
+- Kick selectors follow the current kick.com markup (`data-testid` based), since the old PreMiD ones no longer exist on the site.
 - Tests: `test/discord.js` (added to `npm test`) covers the IPC framing/handshake, site matching (including look-alike hosts) and every site adapter.
 
 ### Security

@@ -163,10 +163,10 @@ const SNAPSHOT_BETIGI = `(() => {
     } else if (h === 'kick.com' || h === 'www.kick.com') {
       const v = q('video');
       const ilk = location.pathname.split('/')[1] || '';
-      const yayinci = q('.stream-username, #channel-username');
+      const yayinci = q('[data-testid="channel-username"], .stream-username, #channel-username');
       if (v && ilk && yayinci && !/^(categories|following|dashboard|transactions|community-guidelines|dmca-policy|privacy-policy|terms-of-service)$/.test(ilk)) {
         const baslikEl = q('[data-testid="livestream-title"]');
-        const av = q('.owner-avatar img');
+        const av = q('img[data-testid="channel-avatar"]') || q('.owner-avatar img');
         const acik = q('meta[name="description"]');
         const sd = Number(v.duration);
         kk = {
